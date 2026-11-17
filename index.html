@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="dark"/>
+<link rel="icon" href="data:,"/>
+<title>擎天柱能动演示版</title>
+
+<style>
+  :root{ --red:#E10600; --blue:#2563EB; --panel:rgba(10,14,22,.82); --line:rgba(255,255,255,.14); --text:#F1F5F9; --muted:#94A3B8; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#070A12;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-tap-highlight-color:transparent}
+  #scene{position:fixed;inset:0}
+  canvas{display:block}
+  /* top bar */
+  .top{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px;pointer-events:none;z-index:5}
+  .title h1{margin:0;font-size:20px;letter-spacing:.06em;font-weight:800;line-height:1}
+  .title h1 span{color:var(--red)}
+  .title p{margin:6px 0 0;color:var(--muted);font-size:12px;letter-spacing:.08em}
+  .status{pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);border-radius:999px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;white-space:nowrap}
+  .dot{width:8px;height:8px;border-radius:50%;background:#22C55E;box-shadow:0 0 12px #22C55E}
+  /* hint */
+  .hint{position:fixed;top:74px;left:16px;z-index:4;background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;color:#CBD5E1;line-height:1.6;max-width:240px}
+  .hint b{color:#fff}
+  @media(max-width:640px){.hint{display:none}.title h1{font-size:17px}}
+  /* bottom control deck */
+  .deck{position:fixed;left:0;right:0;bottom:0;z-index:6;padding:12px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to top, rgba(3,6,12,.92) 55%, transparent);pointer-events:none}
+  .deck-inner{max-width:980px;margin:0 auto;pointer-events:auto}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .btn{min-height:46px;min-width:76px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:14px;font-weight:700;letter-spacing:.04em;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .btn:active{transform:scale(.97)}
+  .btn.active{background:var(--red);border-color:#FF3B30;color:#fff;box-shadow:0 6px 24px rgba(225,6,0,.35)}
+  .btn.blue.active{background:var(--blue);box-shadow:0 6px 24px rgba(37,99,235,.35)}
+  .btn.gold.active{background:#B45309;border-color:#F59E0B}
+  .row2{margin-top:10px;display:flex;gap:10px;align-items:stretch;justify-content:space-between}
+  /* D-pad */
+  .pad{display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px;gap:6px}
+  .pad button{width:48px;height:48px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;font-size:18px;cursor:pointer}
+  .pad button:active,.pad button.on{background:var(--red)}
+  .pad .up{grid-column:2;grid-row:1}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}
+  .side{display:flex;flex-direction:column;gap:8px;justify-content:center;min-width:132px}
+  .side button{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:#fff;font-weight:700;cursor:pointer;padding:0 12px}
+  .meter{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 6px;min-width:140px}
+  .meter label{font-size:11px;color:var(--muted);letter-spacing:.12em;display:flex;justify-content:space-between}
+  input[type=range]{width:100%;accent-color:var(--red);height:32px}
+  @media(max-width:640px){ .row2{flex-wrap:wrap} .meter{order:3;flex-basis:100%} .side{flex-direction:row;flex:1} .side button{flex:1} }
+  #err{position:fixed;inset:auto 12px 110px 12px;z-index:99;display:none;background:#7F1D1D;color:#fff;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.5;white-space:pre-wrap}
+  .badge{font-size:11px;background:rgba(255,255,255,.12);padding:2px 6px;border-radius:999px;font-weight:600}
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<div id="err"></div>
+
+<header class="top">
+  <div class="title">
+    <h1>擎天柱 <span>OPTIMUS</span></h1>
+    <p>THREE.JS 程序化机甲 · 真铰链关节演示</p>
+  </div>
+  <div class="status"><span class="dot"></span><span id="statusText">待机中 · Idle</span><span class="badge" id="modeBadge">机器人</span></div>
+</header>
+
+<div class="hint">
+  <b>拖拽</b> 旋转视角 · <b>滚轮/双指</b> 缩放<br/>
+  <b>W A S D</b> 移动转向 · <b>空格</b> 出拳<br/>
+  点下方按钮切换动作，试试 <b>变形</b>
+</div>
+
+<div class="deck">
+  <div class="deck-inner">
+    <div class="actions" role="group" aria-label="动作">
+      <button class="btn active" data-action="idle">待机</button>
+      <button class="btn" data-action="walk">🚶 行走</button>
+      <button class="btn" data-action="run">🏃 奔跑</button>
+      <button class="btn blue" data-action="wave">👋 挥手</button>
+      <button class="btn blue" data-action="punch">👊 出拳</button>
+      <button class="btn gold" id="transformBtn">🚛 变形</button>
+    </div>
+    <div class="row2">
+      <div class="pad" aria-label="移动">
+        <button class="up" data-move="forward" aria-label="前进">▲</button>
+        <button class="left" data-move="left" aria-label="左转">◀</button>
+        <button class="down" data-move="back" aria-label="后退">▼</button>
+        <button class="right" data-move="right" aria-label="右转">▶</button>
+      </div>
+      <div class="meter">
+        <label><span>移动速度 SPEED</span><span id="speedVal">1.0×</span></label>
+        <input id="speed" type="range" min="0.4" max="2.2" step="0.1" value="1"/>
+        <label><span>提示：行走/奔跑时按住 ▲ 或 W 才会前进，松开原地踏步</span></label>
+      </div>
+      <div class="side">
+        <button id="camBtn">⟲ 重置视角</button>
+        <button id="followBtn">📷 跟随：开</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/"}}
+</script>
+<script type="module">
+import * as THREE_NS from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+const THREE = Object.assign({}, THREE_NS, { OrbitControls, RoundedBoxGeometry });
+window.THREE = THREE;
+window.addEventListener('error',e=>{var d=document.getElementById('err');d.style.display='block';d.textContent='出错了：'+(e.message||e.error);});
+window.addEventListener('unhandledrejection',e=>{var d=document.getElementById('err');d.style.display='block';d.textContent='出错了：'+(e.reason&&e.reason.message||e.reason);});
+(function(){
+"use strict";
+// ---------- Audio (tiny synth, created on first tap) ----------
+var AC=null;
+function audio(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==='suspended')AC.resume(); return AC; }
+function servo(dur){ var ac=audio(); if(!ac)return; var o=ac.createOscillator(),g=ac.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(180,ac.currentTime); o.frequency.exponentialRampToValueAtTime(520,ac.currentTime+dur); g.gain.setValueAtTime(0.06,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+dur); o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur); }
+function clank(){ var ac=audio(); if(!ac)return; var o=ac.createOscillator(),g=ac.createGain(); o.type='square'; o.frequency.setValueAtTime(90,ac.currentTime); g.gain.setValueAtTime(0.12,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.18); o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+0.2); }
+
+// ---------- Renderer / Scene ----------
+var container=document.getElementById('scene');
+var renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+container.appendChild(renderer.domElement);
+
+var scene=new THREE.Scene();
+scene.background=new THREE.Color(0x070a12);
+scene.fog=new THREE.Fog(0x070a12, 14, 30);
+
+var camera=new THREE.PerspectiveCamera(42, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(4.2,2.6,5.2);
+
+// Orbit controls — use bundled addon when present, otherwise built-in fallback so page never crashes
+function FallbackOrbit(cam, dom){
+  this.target=new THREE.Vector3(0,1.35,0); this.enableDamping=true; this.dampingFactor=0.06;
+  this.maxPolarAngle=Math.PI*0.52; this.minDistance=2.2; this.maxDistance=14;
+  var sph=new THREE.Spherical(), tgt=new THREE.Spherical();
+  var off=cam.position.clone().sub(this.target); sph.setFromVector3(off); tgt.copy(sph);
+  var dragging=false,lx=0,ly=0,pinch=0;
+  dom.style.touchAction='none';
+  dom.addEventListener('pointerdown',function(e){dragging=true;lx=e.clientX;ly=e.clientY;dom.setPointerCapture(e.pointerId);});
+  dom.addEventListener('pointermove',function(e){ if(!dragging)return; var dx=e.clientX-lx,dy=e.clientY-ly; lx=e.clientX;ly=e.clientY; tgt.theta-=dx*0.006; tgt.phi-=dy*0.005; tgt.phi=Math.max(0.15,Math.min(Math.PI*0.52,tgt.phi)); });
+  dom.addEventListener('pointerup',function(){dragging=false;}); dom.addEventListener('pointercancel',function(){dragging=false;});
+  dom.addEventListener('wheel',function(e){ e.preventDefault(); tgt.radius*= (e.deltaY>0?1.1:0.9); tgt.radius=Math.max(2.2,Math.min(14,tgt.radius)); },{passive:false});
+  dom.addEventListener('touchmove',function(e){ if(e.touches.length===2){ var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); if(pinch) { tgt.radius*=pinch/d; tgt.radius=Math.max(2.2,Math.min(14,tgt.radius)); } pinch=d; } },{passive:true});
+  dom.addEventListener('touchend',function(){pinch=0;});
+  this.update=function(){ sph.theta+=(tgt.theta-sph.theta)*0.12; sph.phi+=(tgt.phi-sph.phi)*0.12; sph.radius+=(tgt.radius-sph.radius)*0.12; var v=new THREE.Vector3().setFromSpherical(sph); cam.position.copy(this.target).add(v); cam.lookAt(this.target); };
+}
+var controls=null;
+try{ if(THREE.OrbitControls) controls=new THREE.OrbitControls(camera, renderer.domElement); }catch(e){ controls=null; }
+if(!controls) controls=new FallbackOrbit(camera, renderer.domElement);
+controls.target.set(0,1.35,0); if('enableDamping' in controls) controls.enableDamping=true; if('dampingFactor' in controls) controls.dampingFactor=0.06;
+controls.maxPolarAngle=Math.PI*0.52; controls.minDistance=2.2; controls.maxDistance=14;
+
+// Environment for metal reflections — lightweight: hemisphere + lights (no PMREM, keeps first load fast in software WebGL)
+scene.add(new THREE.HemisphereLight(0xbcd3ff,0x1a1210,0.9));
+
+// Lights
+scene.add(new THREE.AmbientLight(0x8899bb,0.55));
+var key=new THREE.DirectionalLight(0xffffff,2.2); key.position.set(5,8,4); key.castShadow=true;
+key.shadow.mapSize.set(1024,1024); key.shadow.camera.left=-6; key.shadow.camera.right=6; key.shadow.camera.top=6; key.shadow.camera.bottom=-6; key.shadow.bias=-0.0004;
+scene.add(key);
+var rim=new THREE.DirectionalLight(0x3b82f6,1.4); rim.position.set(-6,4,-6); scene.add(rim);
+var warm=new THREE.PointLight(0xff3b30,18,12); warm.position.set(-3,1.2,3); scene.add(warm);
+var spot=new THREE.SpotLight(0xffffff,80,20,Math.PI/5,0.45,1.2); spot.position.set(0,7,0); spot.target.position.set(0,0,0); scene.add(spot); scene.add(spot.target);
+
+// Ground — dark showroom disc + rings
+var ground=new THREE.Mesh(new THREE.CircleGeometry(9,64), new THREE.MeshStandardMaterial({color:0x111827,roughness:0.55,metalness:0.35}));
+ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+var ringMat=new THREE.MeshBasicMaterial({color:0x2563eb,transparent:true,opacity:0.55});
+[2.2,3.4].forEach(function(r){ var ring=new THREE.Mesh(new THREE.RingGeometry(r,r+0.035,80),ringMat); ring.rotation.x=-Math.PI/2; ring.position.y=0.002; scene.add(ring); });
+var grid=new THREE.PolarGridHelper(8.8,12,6,64,0x1e3a5f,0x16233d); grid.position.y=0.001; grid.material.transparent=true; grid.material.opacity=0.35; scene.add(grid);
+// backdrop pillars
+for(var i=0;i<10;i++){ var a=i/10*Math.PI*2; var p=new THREE.Mesh(new THREE.BoxGeometry(0.28,3.2,0.28), new THREE.MeshStandardMaterial({color:0x1f2937,roughness:0.6,metalness:0.6,emissive:0x0b1e3a,emissiveIntensity:0.6})); p.position.set(Math.cos(a)*8.2,1.6,Math.sin(a)*8.2); scene.add(p); }
+
+// ---------- Materials ----------
+function std(c,r,m,extra){ var o={color:c,roughness:r,metalness:m}; if(extra)for(var k in extra)o[k]=extra[k]; return new THREE.MeshStandardMaterial(o); }
+var MAT={
+  red: std(0xc1272d,0.32,0.65),
+  redDark: std(0x8f1d22,0.38,0.6),
+  blue: std(0x1d4ed8,0.34,0.62),
+  blueDark: std(0x1e3a8a,0.4,0.55),
+  silver: std(0xc7ccd6,0.22,0.95),
+  chrome: std(0xe8edf5,0.12,1.0),
+  dark: std(0x1f2937,0.55,0.7),
+  black: std(0x0b0f16,0.7,0.4),
+  tire: std(0x111318,0.92,0.05),
+  gold: std(0xd97706,0.3,0.8),
+  glass: new THREE.MeshPhysicalMaterial({color:0x7dd3fc,roughness:0.08,metalness:0.1,transparent:true,opacity:0.92,emissive:0x0e4a66,emissiveIntensity:0.7,clearcoat:1}),
+  eye: std(0x00e5ff,0.2,0.2,{emissive:0x00cfff,emissiveIntensity:2.6}),
+  light: std(0xfff7cc,0.3,0.2,{emissive:0xffd166,emissiveIntensity:1.6}),
+  redLight: std(0xff2222,0.3,0.2,{emissive:0xff0000,emissiveIntensity:1.4})
+};
+function box(w,h,d,mat,x,y,z,parent){
+  var geo;
+  try{ geo=new THREE.RoundedBoxGeometry(w,h,d,2,Math.min(0.035,Math.min(w,h,d)*0.18)); }catch(e){ geo=new THREE.BoxGeometry(w,h,d); }
+  var m=new THREE.Mesh(geo,mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; m.receiveShadow=true; if(parent)parent.add(m); return m;
+}
+function cyl(rt,rb,h,mat,x,y,z,parent,seg){
+  var m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||20),mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; if(parent)parent.add(m); return m;
+}
+function wheel(r,w,parent,x,y,z){
+  var g=new THREE.Group(); g.position.set(x,y,z);
+  var tire=new THREE.Mesh(new THREE.CylinderGeometry(r,r,w,28),MAT.tire); tire.rotation.z=Math.PI/2; tire.castShadow=true; g.add(tire);
+  var hub=new THREE.Mesh(new THREE.CylinderGeometry(r*0.55,r*0.55,w+0.02,20),MAT.silver); hub.rotation.z=Math.PI/2; g.add(hub);
+  var cap=new THREE.Mesh(new THREE.CylinderGeometry(r*0.22,r*0.22,w+0.04,12),MAT.red); cap.rotation.z=Math.PI/2; g.add(cap);
+  if(parent)parent.add(g); return g;
+}
+
+// ---------- Build Optimus (hierarchical joints) ----------
+var root=new THREE.Group(); scene.add(root);
+var hips=new THREE.Group(); hips.position.set(0,1.24,0); root.add(hips);
+
+// Pelvis
+box(0.62,0.26,0.38,MAT.blueDark,0,0,0,hips);
+box(0.66,0.10,0.40,MAT.silver,0,0.10,0,hips);
+box(0.18,0.14,0.06,MAT.gold,0,-0.02,0.20,hips); // belt buckle
+
+// Torso joint
+var torso=new THREE.Group(); torso.position.set(0,0.14,0); hips.add(torso);
+box(0.92,0.78,0.52,MAT.red,0,0.42,0,torso); // chest
+// Windshields — two windows cut look: glass panels on chest front
+box(0.38,0.34,0.04,MAT.glass,-0.21,0.56,0.27,torso);
+box(0.38,0.34,0.04,MAT.glass, 0.21,0.56,0.27,torso);
+box(0.06,0.36,0.05,MAT.silver,0,0.56,0.27,torso);
+box(0.86,0.10,0.04,MAT.silver,0,0.34,0.27,torso); // wiper bar / trim
+// Grille abdomen
+for(var gi=0;gi<3;gi++) box(0.56,0.055,0.03,MAT.chrome,0,0.16-gi*0.09,0.24,torso);
+box(0.60,0.30,0.40,MAT.silver,0,0.12,-0.02,torso);
+// Chest lights + Autobot-ish emblem (simple gold diamond, no logo copy)
+box(0.10,0.10,0.03,MAT.light,-0.36,0.22,0.27,torso);
+box(0.10,0.10,0.03,MAT.light, 0.36,0.22,0.27,torso);
+var emblem=box(0.16,0.16,0.02,MAT.gold,0,0.56,0.285,torso); emblem.rotation.z=Math.PI/4;
+// Backpack (truck cab back)
+box(0.78,0.62,0.18,MAT.redDark,0,0.44,-0.34,torso);
+box(0.70,0.10,0.20,MAT.silver,0,0.82,-0.34,torso);
+
+// Head joint
+var head=new THREE.Group(); head.position.set(0,0.90,0); torso.add(head);
+box(0.34,0.30,0.34,MAT.blue,0,0.16,0,head); // helmet
+box(0.30,0.22,0.06,MAT.silver,0,0.08,0.16,head); // faceplate
+box(0.26,0.07,0.03,MAT.eye,0,0.22,0.175,head); // eyes visor
+box(0.36,0.08,0.36,MAT.blueDark,0,0.33,0,head); // crest
+box(0.07,0.07,0.07,MAT.silver,0,0.40,0,head);
+// antennae / ears
+box(0.05,0.26,0.05,MAT.blue,-0.21,0.28,0,head);
+box(0.05,0.26,0.05,MAT.blue, 0.21,0.28,0,head);
+box(0.09,0.16,0.12,MAT.silver,-0.20,0.10,0,head);
+box(0.09,0.16,0.12,MAT.silver, 0.20,0.10,0,head);
+box(0.28,0.10,0.28,MAT.silver,0,-0.04,0,head); // neck collar
+
+// Arms builder
+function buildArm(side){ // side -1 left, +1 right
+  var sh=new THREE.Group(); sh.position.set(side*0.58,0.72,0); torso.add(sh);
+  // shoulder pauldron + smokestack
+  box(0.30,0.30,0.42,MAT.red,side*0.06,0.06,0,sh);
+  box(0.32,0.08,0.44,MAT.silver,side*0.06,0.23,0,sh);
+  var stack=cyl(0.045,0.045,0.52,MAT.chrome,side*0.10,0.28,-0.14,sh); // smokestack
+  cyl(0.06,0.06,0.08,MAT.dark,side*0.10,0.02,-0.14,sh);
+  // upper arm (hangs down from shoulder pivot)
+  box(0.20,0.42,0.22,MAT.silver,0,-0.28,0,sh);
+  box(0.22,0.14,0.24,MAT.red,0,-0.12,0,sh);
+  var el=new THREE.Group(); el.position.set(0,-0.50,0); sh.add(el);
+  cyl(0.09,0.09,0.22,MAT.dark,0,0,0,el).rotation.z=Math.PI/2;
+  // forearm — boxy truck-door forearm
+  box(0.24,0.44,0.28,MAT.blue,0,-0.26,0,el);
+  box(0.20,0.30,0.03,MAT.glass,0,-0.24,0.15,el);
+  box(0.26,0.08,0.30,MAT.silver,0,-0.04,0,el);
+  // fist
+  box(0.20,0.18,0.22,MAT.dark,0,-0.56,0,el);
+  return {sh:sh, el:el};
+}
+var armL=buildArm(-1), armR=buildArm(1);
+
+// Legs builder
+function buildLeg(side){
+  var hip=new THREE.Group(); hip.position.set(side*0.20, -0.08, 0); hips.add(hip);
+  box(0.26,0.46,0.30,MAT.blueDark,0,-0.24,0,hip); // thigh
+  box(0.28,0.12,0.32,MAT.silver,0,-0.06,0,hip);
+  var knee=new THREE.Group(); knee.position.set(0,-0.50,0); hip.add(knee);
+  cyl(0.10,0.10,0.28,MAT.dark,0,0,0,knee).rotation.z=Math.PI/2;
+  box(0.30,0.50,0.34,MAT.blue,0,-0.28,0,knee); // shin
+  box(0.32,0.16,0.36,MAT.red,0,-0.10,0,knee);
+  box(0.26,0.28,0.03,MAT.silver,0,-0.30,0.18,knee);
+  // wheel on outer calf
+  var w=wheel(0.17,0.10,knee, side*0.22,-0.30,0);
+  // foot
+  var foot=new THREE.Group(); foot.position.set(0,-0.56,0); knee.add(foot);
+  box(0.28,0.12,0.52,MAT.silver,0,-0.04,0.08,foot);
+  box(0.28,0.06,0.54,MAT.dark,0,-0.11,0.08,foot);
+  box(0.20,0.08,0.10,MAT.redLight,0,-0.02,0.32,foot);
+  return {hip:hip,knee:knee,foot:foot,wheel:w};
+}
+var legL=buildLeg(-1), legR=buildLeg(1);
+
+// Truck-only parts (fade/scale in when transformed)
+var truckParts=new THREE.Group(); root.add(truckParts); truckParts.visible=false;
+var cargo=box(1.05,0.95,1.55,MAT.silver,0,0.78,-1.55,truckParts);
+box(1.07,0.12,1.57,MAT.red,0,1.28,-1.55,truckParts);
+box(0.95,0.70,0.04,MAT.blueDark,0,0.78,-2.34,truckParts);
+var tw1=wheel(0.30,0.16,truckParts,-0.52,0.30,-1.15);
+var tw2=wheel(0.30,0.16,truckParts, 0.52,0.30,-1.15);
+var tw3=wheel(0.30,0.16,truckParts,-0.52,0.30,-1.95);
+var tw4=wheel(0.30,0.16,truckParts, 0.52,0.30,-1.95);
+var fw1=wheel(0.30,0.16,truckParts,-0.52,0.30,0.55);
+var fw2=wheel(0.30,0.16,truckParts, 0.52,0.30,0.55);
+box(1.02,0.18,0.30,MAT.chrome,0,0.32,0.78,truckParts); // bumper
+box(0.90,0.10,0.10,MAT.light,0,1.02,0.62,truckParts);
+
+// ---------- Animation state ----------
+var action='idle', prevAction='idle';
+var speedMul=1, follow=true;
+var keys={}, pad={};
+var heading=0, pos=new THREE.Vector3(0,0,0);
+var transformT=0, transformTarget=0, isTruck=false;
+var punchClock=-1, waveClock=0;
+var statusEl=document.getElementById('statusText'), badgeEl=document.getElementById('modeBadge');
+var names={idle:'待机中 · Idle',walk:'行走中 · Walk',run:'奔跑中 · Run',wave:'挥手 · Wave',punch:'出拳 · Punch'};
+
+function setAction(a){
+  if(isTruck && a!=='idle'){ /* stay truck */ }
+  prevAction=action; action=a;
+  document.querySelectorAll('[data-action]').forEach(function(b){ b.classList.toggle('active', b.dataset.action===a); });
+  statusEl.textContent=(isTruck?'卡车形态 · Truck':names[a]||a);
+  if(a==='punch'){ punchClock=0; clank(); }
+  if(a==='wave'){ servo(0.35); }
+}
+document.querySelectorAll('[data-action]').forEach(function(b){
+  b.addEventListener('click',function(){ audio(); if(isTruck) toggleTransform(); setAction(b.dataset.action); });
+});
+function toggleTransform(){
+  isTruck=!isTruck; transformTarget=isTruck?1:0; servo(0.9);
+  document.getElementById('transformBtn').classList.toggle('active',isTruck);
+  document.getElementById('transformBtn').textContent=isTruck?'🤖 变回机器人':'🚛 变形';
+  badgeEl.textContent=isTruck?'卡车':'机器人';
+  statusEl.textContent=isTruck?'变形中… → 卡车形态':'变形中… → 机器人形态';
+  setTimeout(function(){ statusEl.textContent=isTruck?'卡车形态 · Truck（按 ▲ 前进）':names[action]; },1000);
+}
+document.getElementById('transformBtn').addEventListener('click',function(){ audio(); toggleTransform(); });
+document.getElementById('camBtn').addEventListener('click',function(){ camera.position.set(4.2,2.6,5.2); controls.target.set(pos.x,1.35,pos.z); });
+var followBtn=document.getElementById('followBtn');
+followBtn.addEventListener('click',function(){ follow=!follow; followBtn.textContent=follow?'📷 跟随：开':'📷 跟随：关'; });
+var speedInput=document.getElementById('speed');
+speedInput.addEventListener('input',function(){ speedMul=parseFloat(speedInput.value); document.getElementById('speedVal').textContent=speedMul.toFixed(1)+'×'; });
+
+// Keyboard
+addEventListener('keydown',function(e){
+  if(e.code==='Space'){ e.preventDefault(); if(!isTruck) setAction('punch'); return; }
+  keys[e.code]=true;
+});
+addEventListener('keyup',function(e){ keys[e.code]=false; });
+// Touch pad
+document.querySelectorAll('[data-move]').forEach(function(b){
+  var k=b.dataset.move;
+  function on(e){ e.preventDefault(); audio(); pad[k]=true; b.classList.add('on'); }
+  function off(e){ if(e) e.preventDefault(); pad[k]=false; b.classList.remove('on'); }
+  b.addEventListener('pointerdown',on); b.addEventListener('pointerup',off); b.addEventListener('pointerleave',off); b.addEventListener('pointercancel',off);
+});
+
+// Pose helpers — damped joints
+function damp(cur,target,lambda,dt){ return THREE.MathUtils.damp(cur,target,lambda,dt); }
+function setJoint(g,tx,ty,tz,dt){
+  var L=14;
+  g.rotation.x=damp(g.rotation.x,tx,L,dt);
+  g.rotation.y=damp(g.rotation.y,ty,L,dt);
+  g.rotation.z=damp(g.rotation.z,tz,L,dt);
+}
+
+var _last=performance.now(), _elapsed=0;
+var phase=0;
+function animate(){
+  requestAnimationFrame(animate);
+  var _now=performance.now(); var dt=Math.min((_now-_last)/1000,0.05); _last=_now; _elapsed+=dt;
+  var t=_elapsed;
+
+  // transform interpolation
+  transformT=damp(transformT,transformTarget,3.2,dt);
+  if(Math.abs(transformT-transformTarget)<0.002) transformT=transformTarget;
+  truckParts.visible=transformT>0.03;
+  var tp=transformT;
+  truckParts.scale.setScalar(Math.max(0.001,tp));
+  truckParts.position.y=(1-tp)*0.2;
+  if(cargo) cargo.material.opacity=1;
+
+  // input → movement
+  var fwd=(keys.KeyW||pad.forward)?1:((keys.KeyS||pad.back)?-1:0);
+  var turn=(keys.KeyA||pad.left)?1:((keys.KeyD||pad.right)?-1:0);
+  // In walk/run, holding forward moves; turning works anytime robot stands
+  var moving=false, moveSpeed=0;
+  if(tp<0.5){
+    heading+=turn*1.9*dt*(fwd<0?-1:1);
+    if(fwd!==0 && (action==='walk'||action==='run'||action==='idle')){
+      if(action==='idle') setAction('walk');
+      moveSpeed=(action==='run'?2.6:1.35)*speedMul*fwd;
+      moving=true;
+    }
+  }else{
+    heading+=turn*1.4*dt*(fwd<0?-1:1);
+    if(fwd!==0){ moveSpeed=2.8*speedMul*fwd; moving=true; }
+  }
+  pos.x+=Math.sin(heading)*moveSpeed*dt;
+  pos.z+=Math.cos(heading)*moveSpeed*dt;
+  // keep in arena
+  var rr=Math.hypot(pos.x,pos.z); if(rr>7.2){ pos.x*=7.2/rr; pos.z*=7.2/rr; }
+  root.position.set(pos.x,0,pos.z);
+  root.rotation.y=heading;
+
+  // gait phase
+  var freq=(action==='run'?10.5:6.2)*speedMul;
+  if(action==='walk'||action==='run'||moving) phase+=dt*freq;
+  else phase+=dt*1.2;
+
+  var s=Math.sin(phase), c=Math.cos(phase);
+  // defaults (idle)
+  var P={
+    hipL:[0,0,0],kneeL:[0,0,0],hipR:[0,0,0],kneeR:[0,0,0],
+    shL:[0,0,0.07],elL:[-0.12,0,0],shR:[0,0,-0.07],elR:[-0.12,0,0],
+    torso:[0,0,0],head:[0,Math.sin(t*0.4)*0.14,0],hipsY:1.24+Math.sin(t*1.6)*0.015,hipsR:[0,0,0]
+  };
+  if(action==='idle'){
+    P.shL[0]=Math.sin(t*1.6)*0.05; P.shR[0]=-Math.sin(t*1.6)*0.05;
+    P.torso[0]=Math.sin(t*1.6)*0.015;
+  }
+  if(action==='walk'||action==='run'){
+    var amp=action==='run'?0.85:0.55, kamp=action==='run'?1.05:0.7;
+    P.hipL[0]=s*amp; P.hipR[0]=-s*amp;
+    P.kneeL[0]=Math.max(0,-s)*kamp+0.08; P.kneeR[0]=Math.max(0,s)*kamp+0.08;
+    P.shL[0]=-s*amp*0.75; P.shR[0]=s*amp*0.75;
+    P.elL[0]=action==='run'?-0.9-Math.max(0,-s)*0.3:-0.25;
+    P.elR[0]=action==='run'?-0.9-Math.max(0,s)*0.3:-0.25;
+    P.torso[0]=action==='run'?0.20:0.07; P.torso[1]=s*0.06;
+    P.hipsY=1.24+Math.abs(c)*(action==='run'?0.07:0.04)-(action==='run'?0.05:0);
+    P.head[0]=action==='run'?0.12:0.02;
+  }
+  if(action==='wave'){
+    P.shR=[-2.25,0,-0.35]; P.elR=[-0.25,0,Math.sin(t*7)*0.55];
+    P.shL[0]=Math.sin(t*1.6)*0.05;
+    P.head[2]=Math.sin(t*7)*0.04; P.head[1]=-0.15;
+    P.torso[1]=-0.12;
+  }
+  if(action==='punch'){
+    if(punchClock>=0) punchClock+=dt;
+    var pc=punchClock%1.15, wind=0, thrust=0;
+    if(pc<0.35){ wind=pc/0.35; } else if(pc<0.5){ thrust=1; wind=1-(pc-0.35)/0.15; } else { thrust=Math.max(0,1-(pc-0.5)/0.4); }
+    // right arm: wind back then punch forward (shoulder x -1.55 = arm forward horizontal)
+    P.shR[0]= -wind*0.5 - thrust*1.55;
+    P.elR[0]= -0.9*(wind) -0.08*thrust + -0.15*(1-wind-thrust>0?1:0);
+    if(thrust<0.2 && wind<0.2) P.elR[0]=-0.15;
+    P.shR[2]=-0.07-thrust*0.1;
+    P.torso[1]= wind*0.25 - thrust*0.45;
+    P.torso[0]= thrust*0.10;
+    P.shL[0]= thrust*0.4; P.elL[0]=-0.7;
+    P.head[1]=-thrust*0.3;
+    if(pc>0.35&&pc<0.42&&!animate._clanked){ animate._clanked=true; clank(); }
+    if(pc>1.0) animate._clanked=false;
+  }
+
+  // Truck pose override (lerp by tp)
+  if(tp>0.001){
+    function mix(a,b){ return a+(b-a)*tp; }
+    // legs fold back horizontal, torso lowers & pitches, arms tuck, head retracts
+    P.hipL[0]=mix(P.hipL[0],-1.45); P.hipR[0]=mix(P.hipR[0],-1.45);
+    P.kneeL[0]=mix(P.kneeL[0],0.12); P.kneeR[0]=mix(P.kneeR[0],0.12);
+    P.shL=[mix(P.shL[0],0.15),0,mix(P.shL[2],0.55)];
+    P.shR=[mix(P.shR[0],0.15),0,mix(P.shR[2],-0.55)];
+    P.elL[0]=mix(P.elL[0],-0.15); P.elR[0]=mix(P.elR[0],-0.15);
+    P.torso[0]=mix(P.torso[0],-0.18);
+    P.hipsY=mix(P.hipsY,0.62);
+    head.scale.setScalar(Math.max(0.05,1-tp*1.05));
+    // wheels spin when driving in truck mode
+    var spin=moving?moveSpeed*dt*3.2:0;
+    [tw1,tw2,tw3,tw4,fw1,fw2].forEach(function(w){ if(w) w.rotation.x+=spin; });
+    legL.wheel.rotation.x+=spin; legR.wheel.rotation.x+=spin;
+  } else {
+    head.scale.setScalar(1);
+    if(moving){ legL.wheel.rotation.x+=moveSpeed*dt*2.4; legR.wheel.rotation.x+=moveSpeed*dt*2.4; }
+  }
+
+  // apply
+  setJoint(legL.hip,P.hipL[0],P.hipL[1],P.hipL[2],dt);
+  setJoint(legL.knee,P.kneeL[0],0,0,dt);
+  setJoint(legR.hip,P.hipR[0],P.hipR[1],P.hipR[2],dt);
+  setJoint(legR.knee,P.kneeR[0],0,0,dt);
+  setJoint(armL.sh,P.shL[0],P.shL[1],P.shL[2],dt);
+  setJoint(armL.el,P.elL[0],P.elL[1],P.elL[2],dt);
+  setJoint(armR.sh,P.shR[0],P.shR[1],P.shR[2],dt);
+  setJoint(armR.el,P.elR[0],P.elR[1],P.elR[2],dt);
+  setJoint(torso,P.torso[0],P.torso[1],P.torso[2],dt);
+  setJoint(head,P.head[0],P.head[1],P.head[2],dt);
+  hips.position.y=damp(hips.position.y,P.hipsY,12,dt);
+
+  if(follow){
+    var dx=pos.x-controls.target.x, dz=pos.z-controls.target.z;
+    controls.target.x+=dx*0.06; controls.target.z+=dz*0.06; controls.target.y=damp(controls.target.y, tp>0.5?0.6:1.35, 6, dt);
+    camera.position.x+=dx*0.06; camera.position.z+=dz*0.06;
+  }
+  controls.update();
+  renderer.render(scene,camera);
+}
+animate();
+
+addEventListener('resize',function(){
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+})();
+</script>
+</body>
+</html>
