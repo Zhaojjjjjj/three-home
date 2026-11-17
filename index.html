@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="color-scheme" content="dark"/>
-<link rel="icon" href="data:,"/>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <title>擎天柱能动演示版</title>
 
 <style>
@@ -59,7 +59,7 @@
 <header class="top">
   <div class="title">
     <h1>擎天柱 <span>OPTIMUS PRIME</span></h1>
-    <p>成型曲面装甲 · 梯形截面 / 英雄比例重排 · 万级实例化零件 · PBR 金属漆面</p>
+    <p>分层胸甲 · 成型曲面装甲 / 重构卡车形态：卧铺驾驶室 + 驱动桥 + 全包围底盘裙板 · PBR 金属漆面</p>
   </div>
   <div class="status"><span class="dot"></span><span id="statusText">待机中 · Idle</span><span class="badge" id="detailBadge">高密细节层</span><span class="badge" id="modeBadge">机器人</span></div>
 </header>
@@ -203,8 +203,9 @@ function isSoftwareGL(){
   }catch(e){}
   return false;
 }
-if(isSoftwareGL()){ renderer.setPixelRatio(1); renderer.shadowMap.enabled=false; } // software rasterizers: skip the extra shadow pass so frames stay fast
-if(!isSoftwareGL()) setTimeout(function(){
+var _softGL=isSoftwareGL();
+if(_softGL){ renderer.setPixelRatio(0.65); renderer.shadowMap.enabled=false; } // software rasterizers: lower render resolution + skip the shadow pass so frames stay fast enough for capture and low-end devices
+if(!_softGL) setTimeout(function(){
 try{
   var envTex=canvasTex(384,192,function(g,w,h){
     var grad=g.createLinearGradient(0,0,0,h);
@@ -324,7 +325,7 @@ var MAT={
   copper: metal(0xb0662f,0.38),
   glass: new THREE.MeshPhysicalMaterial({color:0x8fd8f2,roughness:0.05,metalness:0,transparent:true,opacity:0.88,envMapIntensity:2.2,emissive:0x0d3a52,emissiveIntensity:0.55,clearcoat:1,clearcoatRoughness:0.05}),
   glassDark: new THREE.MeshPhysicalMaterial({color:0x2c5f7d,roughness:0.06,metalness:0.1,transparent:true,opacity:0.94,envMapIntensity:1.8,emissive:0x082a40,emissiveIntensity:0.5,clearcoat:1}),
-  eye: std(0x66f2ff,0.25,0.1,{emissive:0x18c8ff,emissiveIntensity:3.2}),
+  eye: std(0x66f2ff,0.25,0.1,{emissive:0x18c8ff,emissiveIntensity:2.3}),
   light: std(0xfff3c4,0.3,0.15,{emissive:0xffc94d,emissiveIntensity:2.0}),
   amber: std(0xffb03a,0.3,0.15,{emissive:0xff8a00,emissiveIntensity:1.5}),
   redLight: std(0xff2a22,0.3,0.15,{emissive:0xff1206,emissiveIntensity:1.7}),
@@ -484,6 +485,7 @@ box(0.05,0.06,0.05,MAT.steel,0,0.475,-0.02,head);
 });
 
 // ----- Arms: layered pauldrons, smokestacks, pistons, fingered fists -----
+var armStacks=[];
 function buildArm(side){ // side -1 left, +1 right
   var sh=new THREE.Group(); sh.position.set(side*0.60,0.74,0); torso.add(sh);
   var ball=new THREE.Mesh(new THREE.SphereGeometry(0.115,20,16),MAT.joint); ball.castShadow=true; sh.add(ball);
@@ -493,10 +495,14 @@ function buildArm(side){ // side -1 left, +1 right
   box(0.26,0.06,0.38,MAT.steelDark,side*0.07,0.305,0,sh);
   plate(0.345,0.02,0.465,MAT.seam,side*0.07,0.05,0,sh);
   box(0.05,0.05,0.03,MAT.amber,side*0.20,0.16,0.20,sh);         // pauldron marker light
-  // smokestack: chrome pipe + flared tip + dark base, behind shoulder
-  cyl(0.055,0.055,0.09,MAT.joint,side*0.10,0.03,-0.17,sh);
-  cyl(0.042,0.042,0.55,MAT.chrome,side*0.10,0.33,-0.17,sh);
-  cyl(0.058,0.044,0.09,MAT.steelDark,side*0.10,0.63,-0.17,sh);
+  // smokestack: chrome pipe + flared tip + dark base, behind shoulder.
+  // Grouped at its base pivot so truck mode can counter-rotate it upright
+  // (it becomes the cab's exhaust stack) while the arm folds away beneath.
+  var stackG=new THREE.Group(); stackG.position.set(side*0.10,0,-0.17); sh.add(stackG);
+  cyl(0.055,0.055,0.09,MAT.joint,0,0.03,0,stackG);
+  cyl(0.042,0.042,0.55,MAT.chrome,0,0.33,0,stackG);
+  cyl(0.058,0.044,0.09,MAT.steelDark,0,0.63,0,stackG);
+  armStacks.push({g:stackG,sh:sh});
   // upper arm: dark core + armor shells + bicep piston
   box(0.185,0.42,0.21,MAT.joint,0,-0.27,0,sh);
   box(0.225,0.30,0.25,MAT.steel,0,-0.24,0,sh);
@@ -749,11 +755,14 @@ function finStackY(parent,cx,cy,cz,n,dy,w){ // vertical stack of horizontal cool
 }
 
 // --- Silhouette: domed pauldrons, chest taper wedges, sculpted head, boot flares ---
+var pauldronDomes=[]; // base scales kept so truck mode can deflate the domes into the cab silhouette
 [{a:armL,s:-1},{a:armR,s:1}].forEach(function(o){
   var dome=new THREE.Mesh(new THREE.SphereGeometry(0.20,24,14,0,Math.PI*2,0,Math.PI/2),MAT.redFlame);
   dome.scale.set(1.02,0.62,1.30); dome.position.set(o.s*0.07,0.30,0); dome.castShadow=true; dome.receiveShadow=true; o.a.sh.add(dome); detailCount++;
+  pauldronDomes.push({m:dome,sx:1.02,sy:0.62,sz:1.30});
   var dome2=new THREE.Mesh(new THREE.SphereGeometry(0.155,20,12,0,Math.PI*2,0,Math.PI/2),MAT.red);
   dome2.scale.set(1.0,0.6,1.25); dome2.position.set(o.s*0.07,0.345,0); dome2.castShadow=true; o.a.sh.add(dome2); detailCount++;
+  pauldronDomes.push({m:dome2,sx:1.0,sy:0.6,sz:1.25});
 });
 [-1,1].forEach(function(s){
   var wedge=box(0.12,0.46,0.42,MAT.redDark,s*0.465,0.42,0,torso); wedge.rotation.y=-s*0.28; detailCount++;
@@ -857,6 +866,7 @@ legL.foot.position.y=-0.66; legR.foot.position.y=-0.66;   // longer shins; sole 
 torso.scale.set(0.97,1.0,0.96);
 // --- chest form: rounded yoke cap, sloping side shells, waist pinch ---
 dome(torso,0.50,1.02,0.34,0.55,MAT.redFlame,0,0.90,0);
+var browVisor=box(0.94,0.045,0.22,MAT.redDark,0,0.865,0.275,torso); browVisor.rotation.x=0.30; detailCount++; // sloped brow over the windshield — sun visor in truck mode
 [-1,1].forEach(function(s){
   trap(0.17,0.07,0.82,0.50,0.36,MAT.redDark,s*0.485,0.52,0,torso,-s*0.22);       // sloping chest sides
   trap(0.13,0.06,0.52,0.40,0.30,MAT.red,s*0.47,0.68,-0.03,torso,-s*0.18);
@@ -915,37 +925,118 @@ rivetRectZ(head,0,0.115,0.20,0.11,0.09,0.028);                                  
 })();
 updateCensus();
 
-// ----- Truck-only parts: ribbed trailer, tanks, mudflaps, light bar -----
-var truckParts=new THREE.Group(); root.add(truckParts); truckParts.visible=false;
-var cargo=box(1.06,0.96,1.56,MAT.brushed,0,0.80,-1.55,truckParts);
-box(1.08,0.10,1.58,MAT.red,0,1.32,-1.55,truckParts);              // trailer roof band
-box(1.08,0.08,1.58,MAT.steelDark,0,0.30,-1.55,truckParts);       // trailer skirt
-for(var ri=0;ri<7;ri++){ var rz=-2.22+ri*0.225;                  // trailer ribs
-  plate(0.02,0.86,0.045,MAT.steelDark,-0.535,0.82,rz,truckParts);
-  plate(0.02,0.86,0.045,MAT.steelDark, 0.535,0.82,rz,truckParts);
-}
-box(0.96,0.72,0.04,MAT.blueDark,0,0.80,-2.345,truckParts);       // rear doors
-plate(0.02,0.72,0.02,MAT.seam,0,0.80,-2.37,truckParts);
-plate(0.96,0.02,0.02,MAT.seam,0,0.80,-2.37,truckParts);
+// ============================================================
+// SCULPT PASS 4 — layered chest / neck / shoulder structure.
+// The chest no longer reads as one flat red box: a neck collar
+// ring, shoulder bridge blocks tying the torso into the pauldrons,
+// stacked chrome slats under the grille, and a layered pelvis
+// front give the torso stacked, interlocking depth.
+// ============================================================
+cyl(0.155,0.195,0.11,MAT.steelDark,0,0.955,0,torso); detailCount++;            // neck collar ring
+cyl(0.115,0.135,0.07,MAT.joint,0,1.0,0,torso); detailCount++;                  // collar inner throat
 [-1,1].forEach(function(s){
-  box(0.07,0.06,0.03,MAT.redLight,s*0.40,0.42,-2.37,truckParts);
-  var tank=cyl(0.11,0.11,0.85,MAT.chrome,s*0.42,0.42,-0.55,truckParts); tank.rotation.x=Math.PI/2; // fuel tank
-  box(0.30,0.34,0.03,MAT.black,s*0.40,0.22,-2.28,truckParts);   // mudflap
+  var bridge=box(0.24,0.11,0.32,MAT.redDark,s*0.565,0.815,0,torso); bridge.rotation.z=-s*0.10; detailCount++; // shoulder bridges
+  box(0.20,0.05,0.26,MAT.steelDark,s*0.565,0.755,0,torso); detailCount++;      // bridge under-plate
+  trap(0.10,0.16,0.34,0.30,0.40,MAT.red,s*0.50,0.30,0.02,torso,-s*0.15); detailCount++; // lower chest side flare
 });
-var tw1=wheel(0.30,0.17,truckParts,-0.53,0.30,-1.15);
-var tw2=wheel(0.30,0.17,truckParts, 0.53,0.30,-1.15);
-var tw3=wheel(0.30,0.17,truckParts,-0.53,0.30,-1.95);
-var tw4=wheel(0.30,0.17,truckParts, 0.53,0.30,-1.95);
-var fw1=wheel(0.30,0.17,truckParts,-0.53,0.30,0.55);
-var fw2=wheel(0.30,0.17,truckParts, 0.53,0.30,0.55);
-box(1.04,0.20,0.10,MAT.chrome,0,0.34,0.86,truckParts);           // front bumper
-box(0.94,0.06,0.06,MAT.dark,0,0.52,0.84,truckParts);
-for(var li=0;li<5;li++) box(0.07,0.05,0.03,MAT.light,-0.24+li*0.12,1.06,0.66,truckParts); // roof light bar
-box(0.30,0.05,0.03,MAT.redLight,0,0.62,0.80,truckParts);
+plate(0.68,0.030,0.02,MAT.chrome,0,0.175,0.262,torso); detailCount++;          // stacked slats under grille
+plate(0.60,0.026,0.02,MAT.steelDark,0,0.125,0.258,torso); detailCount++;
+plate(0.52,0.024,0.02,MAT.chrome,0,0.078,0.252,torso); detailCount++;
+box(0.30,0.05,0.03,MAT.redDark,0,-0.005,0.185,torso); detailCount++;           // waist front plate
+[-1,1].forEach(function(s){ plate(0.03,0.20,0.02,MAT.gold,s*0.20,-0.02,0.19,torso); detailCount++; }); // gold waist accents
+updateCensus();
+
+// ----- Truck-only parts -----
+// The robot chest IS the cab front — windshield, grille, headlights and a
+// bumper already live on the torso — so truck mode completes the cab
+// AROUND the folded robot (roof, visor, lower fascia down to a bumper at
+// ground line, side extenders, chassis rails the folded legs tuck
+// between) instead of floating a second, disconnected cab in front of
+// it. The trailer is its own group that rolls in from behind and docks
+// as the fold completes; nothing scale-pops into existence.
+var truckParts=new THREE.Group(); root.add(truckParts); truckParts.visible=false;
+var cabParts=new THREE.Group(); truckParts.add(cabParts);
+var trailerG=new THREE.Group(); truckParts.add(trailerG);
+// --- cab completion, aligned to the chest front face (z≈0.26, top≈1.76) ---
+box(0.98,0.05,0.72,MAT.red,0,1.745,0,cabParts);                   // cab roof (yoke dome crowns through it)
+var visor=box(0.92,0.035,0.24,MAT.redDark,0,1.565,0.33,cabParts); visor.rotation.x=0.30; // sun visor over the windshield
+for(var li=0;li<5;li++) box(0.06,0.04,0.025,MAT.amber,-0.24+li*0.12,1.775,0.31,cabParts); // roof marker lights
+box(0.90,0.52,0.10,MAT.red,0,0.615,0.26,cabParts);                // lower fascia: chest bottom down to bumper line
+box(0.62,0.17,0.04,MAT.dark,0,0.56,0.315,cabParts);               // lower grille
+vents(7,0.13,0.082,MAT.chrome,0,0.56,0.34,cabParts,true);
+box(1.00,0.17,0.09,MAT.chrome,0,0.335,0.31,cabParts);             // front bumper at the fascia base
+var defl=box(0.86,0.64,0.035,MAT.red,0,1.59,-0.62,cabParts); defl.rotation.x=-2.18; // roof air deflector sloping down to the trailer top
+[-1,1].forEach(function(s){
+  var fog=cyl(0.038,0.038,0.025,MAT.light,s*0.36,0.335,0.365,cabParts); fog.rotation.x=Math.PI/2; // bumper fog lamps
+  box(0.34,0.05,0.22,MAT.steelDark,s*0.52,0.30,0.18,cabParts);    // cab step
+  box(0.05,1.15,1.02,MAT.redDark,s*0.545,1.08,-0.38,cabParts);    // side extender: covers folded arms + cab/trailer gap
+  box(0.07,0.13,3.40,MAT.joint,s*0.30,0.40,-1.35,cabParts);       // chassis rail (folded legs tuck between the pair)
+  var tank=cyl(0.11,0.11,0.55,MAT.chrome,s*0.42,0.44,-0.58,cabParts); tank.rotation.x=Math.PI/2; // fuel tank on the rail
+  cyl(0.045,0.045,1.15,MAT.chrome,s*0.60,1.15,-0.55,cabParts);    // exhaust stack behind the cab
+  cyl(0.06,0.047,0.09,MAT.steelDark,s*0.60,1.76,-0.55,cabParts);  // stack flare tip
+});
+var fw1=wheel(0.30,0.17,cabParts,-0.53,0.30,0.05);                // front axle under the cab front edge
+var fw2=wheel(0.30,0.17,cabParts, 0.53,0.30,0.05);
+// --- trailer (own group; rolls in from behind during the fold) ---
+var cargo=box(1.06,0.94,2.30,MAT.brushed,0,0.92,-2.03,trailerG);
+box(1.08,0.09,2.32,MAT.red,0,1.415,-2.03,trailerG);               // trailer roof band
+box(1.08,0.10,2.32,MAT.steelDark,0,0.475,-2.03,trailerG);        // floor skirt slab (hides the folded-leg junction)
+for(var ri=0;ri<11;ri++){ var rz=-3.10+ri*0.20;                   // trailer ribs
+  plate(0.02,0.84,0.045,MAT.steelDark,-0.535,0.93,rz,trailerG);
+  plate(0.02,0.84,0.045,MAT.steelDark, 0.535,0.93,rz,trailerG);
+}
+box(0.96,0.80,0.04,MAT.blueDark,0,0.92,-3.195,trailerG);         // rear doors
+plate(0.02,0.80,0.02,MAT.seam,0,0.92,-3.22,trailerG);
+plate(0.96,0.02,0.02,MAT.seam,0,0.92,-3.22,trailerG);
+[-1,1].forEach(function(s){
+  box(0.07,0.06,0.03,MAT.redLight,s*0.40,0.52,-3.22,trailerG);   // rear lights
+  box(0.06,0.05,0.03,MAT.amber,s*0.40,1.30,-3.22,trailerG);
+  box(0.30,0.36,0.03,MAT.black,s*0.40,0.20,-3.26,trailerG);       // mudflap
+  box(0.06,0.45,0.06,MAT.steelDark,s*0.42,0.225,-1.05,trailerG);  // landing gear
+  box(0.16,0.04,0.16,MAT.steelDark,s*0.42,0.02,-1.05,trailerG);
+});
+var tw1=wheel(0.30,0.17,trailerG,-0.53,0.30,-2.45);              // tandem rear axles
+var tw2=wheel(0.30,0.17,trailerG, 0.53,0.30,-2.45);
+var tw3=wheel(0.30,0.17,trailerG,-0.53,0.30,-2.95);
+var tw4=wheel(0.30,0.17,trailerG, 0.53,0.30,-2.95);
 // Trailer sculpt pass: perforated armored siding + door field + rivet frame (instanced)
-[-1,1].forEach(function(s){ perfX(truckParts,s*0.548,0.82,-1.55,30,70,0.029,0.0215); });
-perfZ(truckParts,0,0.80,-2.372,44,30,0.02,0.02);
-rivetRectZ(truckParts,0,0.80,-2.375,0.46,0.34,0.05);
+[-1,1].forEach(function(s){ perfX(trailerG,s*0.548,0.93,-2.03,30,100,0.029,0.0215); });
+perfZ(trailerG,0,0.92,-3.222,48,26,0.02,0.03);
+rivetRectZ(trailerG,0,0.92,-3.225,0.46,0.36,0.05);
+
+// --- TRUCK PASS 2: complete tractor rework ---
+// Sleeper cab encloses the backpack so the cab has real depth,
+// roofline flows into a raised trailer, a drive axle sits under
+// the cab rear, and a chassis deck + full side skirts hide the
+// folded legs — the truck reads as one vehicle, not a squatting
+// robot wearing a cargo box.
+box(0.96,1.04,0.60,MAT.red,0,1.13,-0.63,cabParts);                 // sleeper cab
+box(0.98,0.06,0.66,MAT.redDark,0,1.68,-0.63,cabParts);             // sleeper roof
+box(0.90,0.05,0.60,MAT.dark,0,0.585,-0.63,cabParts);               // sleeper lower band
+box(0.86,0.07,1.70,MAT.dark,0,0.70,-1.55,cabParts);                // chassis deck over folded legs
+var dw1=wheel(0.32,0.18,cabParts,-0.53,0.32,-0.80);               // drive axle under cab rear
+var dw2=wheel(0.32,0.18,cabParts, 0.53,0.32,-0.80);
+box(1.06,0.20,2.30,MAT.brushed,0,1.47,-2.03,trailerG);             // raised trailer roof → top ≈1.57, meets deflector
+box(1.02,0.09,0.07,MAT.steelDark,0,0.30,-3.24,trailerG);           // rear underrun bar
+plate(0.70,0.03,0.02,MAT.chrome,0,0.335,0.362,cabParts);           // bumper step pad
+[-1,1].forEach(function(s){
+  box(0.03,0.34,0.44,MAT.glassDark,s*0.50,1.32,-0.60,cabParts);   // sleeper side window
+  plate(0.02,0.02,0.40,MAT.chrome,s*0.515,1.13,-0.60,cabParts);   // sleeper window sill
+  box(0.10,0.78,0.62,MAT.red,s*0.56,1.18,0.02,cabParts);           // cab side fairing over folded arm zone
+  box(0.03,0.30,0.40,MAT.glassDark,s*0.605,1.34,0.05,cabParts);   // cab side window
+  plate(0.02,0.025,0.30,MAT.chrome,s*0.615,0.90,0.05,cabParts);   // door handle line
+  var stalk=cyl(0.014,0.014,0.24,MAT.steelDark,s*0.58,1.54,0.30,cabParts); stalk.rotation.z=-s*1.05; stalk.rotation.x=0.25; // mirror stalk
+  box(0.04,0.20,0.12,MAT.black,s*0.65,1.45,0.34,cabParts);         // mirror housing
+  box(0.015,0.16,0.09,MAT.chrome,s*0.675,1.45,0.34,cabParts);      // mirror glass
+  box(0.22,0.09,0.80,MAT.redDark,s*0.53,0.635,0.06,cabParts);      // front fender
+  box(0.22,0.09,0.78,MAT.redDark,s*0.53,0.66,-0.80,cabParts);      // drive-axle fender
+  box(0.05,0.42,1.66,MAT.redDark,s*0.505,0.40,-1.78,cabParts);     // chassis side skirt (hides folded legs)
+  plate(0.02,0.03,1.66,MAT.chrome,s*0.535,0.60,-1.78,cabParts);    // skirt chrome lip
+  box(0.10,0.07,0.85,MAT.steelDark,s*0.55,0.635,-2.45,trailerG);   // trailer wheel fenders
+  box(0.10,0.07,0.85,MAT.steelDark,s*0.55,0.635,-2.95,trailerG);
+  plate(0.02,0.10,2.28,MAT.red,s*0.54,1.06,-2.03,trailerG);        // trailer side stripe
+  plate(0.02,0.03,2.28,MAT.chrome,s*0.54,0.90,-2.03,trailerG);     // trailer rub rail
+});
 updateCensus();
 
 // ---------- Animation state ----------
@@ -1006,10 +1097,13 @@ function setJoint(g,tx,ty,tz,dt){
   g.rotation.z=damp(g.rotation.z,tz,L,dt);
 }
 
-var _last=performance.now(), _elapsed=0;
+var _last=performance.now(), _elapsed=0, _skipF=0;
 var phase=0;
 function animate(){
   requestAnimationFrame(animate);
+  // software rasterizers: render every second tick so the compositor gets
+  // idle gaps (screenshot capture and low-end devices stay responsive)
+  if(_softGL){ _skipF=(_skipF+1)%2; if(_skipF) return; }
   var _now=performance.now(); var dt=Math.min((_now-_last)/1000,0.05); _last=_now; _elapsed+=dt;
   var t=_elapsed;
 
@@ -1018,10 +1112,12 @@ function animate(){
   // transform interpolation
   transformT=damp(transformT,transformTarget,3.2,dt);
   if(Math.abs(transformT-transformTarget)<0.002) transformT=transformTarget;
-  truckParts.visible=transformT>0.03;
   var tp=transformT;
-  truckParts.scale.setScalar(Math.max(0.001,tp));
-  truckParts.position.y=(1-tp)*0.2;
+  truckParts.visible=tp>0.02;
+  // the trailer rolls in from behind and docks as the fold completes —
+  // eased slide, no scale pop; cab-completion parts are masked by the fold
+  trailerG.position.z=-2.1*(1-tp)*(1-tp);
+  trailerG.position.y=-0.10*(1-tp);
 
   // input → movement
   var fwd=(keys.KeyW||pad.forward)?1:((keys.KeyS||pad.back)?-1:0);
@@ -1095,21 +1191,40 @@ function animate(){
   // Truck pose override (lerp by tp)
   if(tp>0.001){
     function mix(a,b){ return a+(b-a)*tp; }
-    P.hipL[0]=mix(P.hipL[0],-1.45); P.hipR[0]=mix(P.hipR[0],-1.45);
-    P.kneeL[0]=mix(P.kneeL[0],0.12); P.kneeR[0]=mix(P.kneeR[0],0.12);
-    P.shL=[mix(P.shL[0],0.15),0,mix(P.shL[2],0.55)];
-    P.shR=[mix(P.shR[0],0.15),0,mix(P.shR[2],-0.55)];
-    P.elL[0]=mix(P.elL[0],-0.15); P.elR[0]=mix(P.elR[0],-0.15);
-    P.torso[0]=mix(P.torso[0],-0.18);
+    // legs fold BACK flat under the chassis: thigh swings to near-
+    // horizontal, shin continues the line — deck + side skirts hide
+    // the whole leg run, feet end inside the trailer volume
+    P.hipL[0]=mix(P.hipL[0],1.42); P.hipR[0]=mix(P.hipR[0],1.42);
+    P.kneeL[0]=mix(P.kneeL[0],0.18); P.kneeR[0]=mix(P.kneeR[0],0.18);
+    // arms swing fully back along the cab sides and tuck inward;
+    // forearms fold back behind the cab, covered by the side fairings
+    P.shL=[mix(P.shL[0],1.30),0,mix(P.shL[2],0.30)];
+    P.shR=[mix(P.shR[0],1.30),0,mix(P.shR[2],-0.30)];
+    P.elL[0]=mix(P.elL[0],1.15); P.elR[0]=mix(P.elR[0],1.15);
+    P.torso[0]=mix(P.torso[0],0.02);
+    P.head[0]=mix(P.head[0],1.05); P.head[1]=mix(P.head[1],0); // face pitches down as the head retracts
     P.hipsY=mix(P.hipsY,0.62);
-    head.scale.setScalar(1.30*Math.max(0.05,1-tp*1.05));
     var spin=moving?moveSpeed*dt*3.2:0;
-    [tw1,tw2,tw3,tw4,fw1,fw2].forEach(function(w){ if(w) w.rotation.x+=spin; });
+    [tw1,tw2,tw3,tw4,fw1,fw2,dw1,dw2].forEach(function(w){ if(w) w.rotation.x+=spin; });
     legL.wheel.rotation.x+=spin; legR.wheel.rotation.x+=spin;
   } else {
-    head.scale.setScalar(1.30);
     if(moving){ legL.wheel.rotation.x+=moveSpeed*dt*2.4; legR.wheel.rotation.x+=moveSpeed*dt*2.4; }
   }
+  // head retracts fully INTO the cab (sinks deep + shrinks), restored on unfold
+  head.scale.setScalar(1.22*(1-0.72*tp));
+  head.position.y=0.93-0.62*tp;
+  // shoulders slide inward in truck mode so the pauldrons sit at the
+  // cab's top corners instead of jutting out past the bodywork
+  armL.sh.position.x=-0.66+0.24*tp; armR.sh.position.x=0.66-0.24*tp;
+  armL.sh.position.z=-0.06*tp; armR.sh.position.z=-0.06*tp;
+  // pauldron domes deflate into the cab roofline in truck mode (the slab
+  // pauldron guards underneath stay on as cab top corners)
+  var domeK=1-0.88*tp;
+  for(var di2=0;di2<pauldronDomes.length;di2++){ var pd=pauldronDomes[di2]; pd.m.scale.set(pd.sx*domeK,pd.sy*domeK,pd.sz*domeK); }
+  // arm smokestacks fold away with the arms in truck mode — the cab's own
+  // fixed exhaust stacks (cabParts, behind the side extenders) take over
+  var stackK=1-0.92*tp;
+  for(var si2=0;si2<armStacks.length;si2++){ armStacks[si2].g.scale.setScalar(Math.max(0.02,stackK)); }
 
   // apply
   setJoint(legL.hip,P.hipL[0],P.hipL[1],P.hipL[2],dt);
