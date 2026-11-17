@@ -8,57 +8,60 @@
 <title>擎天柱能动演示版</title>
 
 <style>
-  :root{ --red:#E10600; --blue:#2563EB; --panel:rgba(10,14,22,.82); --line:rgba(255,255,255,.14); --text:#F1F5F9; --muted:#94A3B8; }
+  :root{ --red:#E10600; --blue:#3B82F6; --panel:rgba(8,11,18,.8); --line:rgba(148,163,184,.22); --text:#F1F5F9; --muted:#9AA7B8; }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;overflow:hidden;background:#070A12;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:#05070C;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-tap-highlight-color:transparent}
   #scene{position:fixed;inset:0}
   canvas{display:block}
   /* top bar */
   .top{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px;pointer-events:none;z-index:5}
-  .title h1{margin:0;font-size:20px;letter-spacing:.06em;font-weight:800;line-height:1}
-  .title h1 span{color:var(--red)}
-  .title p{margin:6px 0 0;color:var(--muted);font-size:12px;letter-spacing:.08em}
-  .status{pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);border-radius:999px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;white-space:nowrap}
+  .title{border-left:3px solid var(--red);padding-left:10px}
+  .title h1{margin:0;font-size:20px;letter-spacing:.14em;font-weight:800;line-height:1}
+  .title h1 span{color:#CBD5E1;font-weight:600}
+  .title p{margin:6px 0 0;color:var(--muted);font-size:11px;letter-spacing:.22em}
+  .status{pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(12px);border-radius:6px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px;white-space:nowrap}
   .dot{width:8px;height:8px;border-radius:50%;background:#22C55E;box-shadow:0 0 12px #22C55E}
   /* hint */
-  .hint{position:fixed;top:74px;left:16px;z-index:4;background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;color:#CBD5E1;line-height:1.6;max-width:240px}
+  .hint{position:fixed;top:78px;left:16px;z-index:4;background:rgba(5,8,14,.55);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12px;color:#CBD5E1;line-height:1.6;max-width:240px}
   .hint b{color:#fff}
   @media(max-width:640px){.hint{display:none}.title h1{font-size:17px}}
   /* bottom control deck */
-  .deck{position:fixed;left:0;right:0;bottom:0;z-index:6;padding:12px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to top, rgba(3,6,12,.92) 55%, transparent);pointer-events:none}
+  .deck{position:fixed;left:0;right:0;bottom:0;z-index:6;padding:12px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to top, rgba(2,4,8,.94) 55%, transparent);pointer-events:none}
   .deck-inner{max-width:980px;margin:0 auto;pointer-events:auto}
   .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-  .btn{min-height:46px;min-width:76px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:14px;font-weight:700;letter-spacing:.04em;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .btn{min-height:46px;min-width:76px;padding:0 16px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:14px;font-weight:700;letter-spacing:.14em;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
   .btn:active{transform:scale(.97)}
   .btn.active{background:var(--red);border-color:#FF3B30;color:#fff;box-shadow:0 6px 24px rgba(225,6,0,.35)}
-  .btn.blue.active{background:var(--blue);box-shadow:0 6px 24px rgba(37,99,235,.35)}
-  .btn.gold.active{background:#B45309;border-color:#F59E0B}
+  .btn.blue.active{background:#1D4ED8;border-color:#3B82F6;box-shadow:0 6px 24px rgba(37,99,235,.35)}
+  .btn.gold.active{background:#92400E;border-color:#F59E0B}
   .row2{margin-top:10px;display:flex;gap:10px;align-items:stretch;justify-content:space-between}
   /* D-pad */
   .pad{display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px;gap:6px}
-  .pad button{width:48px;height:48px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;font-size:18px;cursor:pointer}
+  .pad button{width:48px;height:48px;border-radius:6px;border:1px solid var(--line);background:rgba(255,255,255,.07);color:#fff;font-size:16px;cursor:pointer}
   .pad button:active,.pad button.on{background:var(--red)}
   .pad .up{grid-column:2;grid-row:1}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}
   .side{display:flex;flex-direction:column;gap:8px;justify-content:center;min-width:132px}
-  .side button{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:#fff;font-weight:700;cursor:pointer;padding:0 12px}
+  .side button{min-height:44px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:#fff;font-weight:700;letter-spacing:.08em;cursor:pointer;padding:0 12px}
   .meter{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:0 6px;min-width:140px}
   .meter label{font-size:11px;color:var(--muted);letter-spacing:.12em;display:flex;justify-content:space-between}
   input[type=range]{width:100%;accent-color:var(--red);height:32px}
   @media(max-width:640px){ .row2{flex-wrap:wrap} .meter{order:3;flex-basis:100%} .side{flex-direction:row;flex:1} .side button{flex:1} }
-  #err{position:fixed;inset:auto 12px 110px 12px;z-index:99;display:none;background:#7F1D1D;color:#fff;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.5;white-space:pre-wrap}
-  .badge{font-size:11px;background:rgba(255,255,255,.12);padding:2px 6px;border-radius:999px;font-weight:600}
+  #vignette{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at 50% 42%,transparent 52%,rgba(0,0,0,.42) 100%),linear-gradient(to bottom,rgba(0,0,0,.22),transparent 18%,transparent 82%,rgba(0,0,0,.35))}
+  #err{position:fixed;inset:auto 12px 110px 12px;z-index:99;display:none;background:#7F1D1D;color:#fff;padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.5;white-space:pre-wrap}
+  .badge{font-size:11px;background:rgba(255,255,255,.12);padding:2px 6px;border-radius:4px;font-weight:600}
 </style>
 </head>
 <body>
 <div id="scene"></div>
+<div id="vignette"></div>
 <div id="err"></div>
 
 <header class="top">
   <div class="title">
-    <h1>擎天柱 <span>OPTIMUS</span></h1>
-    <p>THREE.JS 程序化机甲 · 真铰链关节演示</p>
+    <h1>擎天柱 <span>OPTIMUS PRIME</span></h1>
+    <p>成型曲面装甲 · 梯形截面 / 英雄比例重排 · 万级实例化零件 · PBR 金属漆面</p>
   </div>
-  <div class="status"><span class="dot"></span><span id="statusText">待机中 · Idle</span><span class="badge" id="modeBadge">机器人</span></div>
+  <div class="status"><span class="dot"></span><span id="statusText">待机中 · Idle</span><span class="badge" id="detailBadge">高密细节层</span><span class="badge" id="modeBadge">机器人</span></div>
 </header>
 
 <div class="hint">
@@ -71,11 +74,11 @@
   <div class="deck-inner">
     <div class="actions" role="group" aria-label="动作">
       <button class="btn active" data-action="idle">待机</button>
-      <button class="btn" data-action="walk">🚶 行走</button>
-      <button class="btn" data-action="run">🏃 奔跑</button>
-      <button class="btn blue" data-action="wave">👋 挥手</button>
-      <button class="btn blue" data-action="punch">👊 出拳</button>
-      <button class="btn gold" id="transformBtn">🚛 变形</button>
+      <button class="btn" data-action="walk">行走</button>
+      <button class="btn" data-action="run">奔跑</button>
+      <button class="btn blue" data-action="wave">挥手</button>
+      <button class="btn blue" data-action="punch">出拳</button>
+      <button class="btn gold" id="transformBtn">变形 · 卡车</button>
     </div>
     <div class="row2">
       <div class="pad" aria-label="移动">
@@ -90,8 +93,8 @@
         <label><span>提示：行走/奔跑时按住 ▲ 或 W 才会前进，松开原地踏步</span></label>
       </div>
       <div class="side">
-        <button id="camBtn">⟲ 重置视角</button>
-        <button id="followBtn">📷 跟随：开</button>
+        <button id="camBtn">重置视角</button>
+        <button id="followBtn">跟随：开</button>
       </div>
     </div>
   </div>
@@ -119,19 +122,113 @@ function clank(){ var ac=audio(); if(!ac)return; var o=ac.createOscillator(),g=a
 // ---------- Renderer / Scene ----------
 var container=document.getElementById('scene');
 var renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFShadowMap;
-renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.18;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 container.appendChild(renderer.domElement);
 
 var scene=new THREE.Scene();
-scene.background=new THREE.Color(0x070a12);
-scene.fog=new THREE.Fog(0x070a12, 14, 30);
+scene.background=new THREE.Color(0x05070c);
+scene.fog=new THREE.Fog(0x05070c, 16, 34);
 
-var camera=new THREE.PerspectiveCamera(42, innerWidth/innerHeight, 0.1, 100);
-camera.position.set(4.2,2.6,5.2);
+var camera=new THREE.PerspectiveCamera(40, innerWidth/innerHeight, 0.1, 120);
+camera.position.set(4.4,2.4,5.6);
+
+// ---------- Procedural textures (paint wear / brushed metal / studio env) ----------
+function canvasTex(w,h,draw,srgb){
+  var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  draw(cv.getContext('2d'),w,h);
+  var tx=new THREE.CanvasTexture(cv);
+  tx.wrapS=tx.wrapT=THREE.RepeatWrapping;
+  if(srgb) tx.colorSpace=THREE.SRGBColorSpace;
+  tx.anisotropy=4;
+  return tx;
+}
+// subtle scratches + scuffs used as roughness/bump variation on painted armor
+var wearTex=canvasTex(1024,1024,function(g,w,h){
+  g.fillStyle='#7a7a7a'; g.fillRect(0,0,w,h);
+  for(var i=0;i<9000;i++){
+    var v=80+Math.random()*110|0;
+    g.fillStyle='rgb('+v+','+v+','+v+')';
+    g.fillRect(Math.random()*w,Math.random()*h,1+Math.random()*3,1+Math.random()*2);
+  }
+  // fine scratches, bright exposed-metal hairlines + dark scores
+  for(var j=0;j<340;j++){
+    var bright=Math.random()<0.55;
+    g.strokeStyle=bright?'rgba(215,215,215,.6)':'rgba(35,35,35,.5)';
+    g.lineWidth=Math.random()<0.15?1.6:0.6;
+    g.beginPath();
+    var x=Math.random()*w,y=Math.random()*h,a=Math.random()*Math.PI,l=8+Math.random()*110;
+    g.moveTo(x,y); g.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l*0.28); g.stroke();
+  }
+  // chipped-paint clusters: dark pit ringed by bright chip edge
+  for(var c2=0;c2<130;c2++){
+    var cx=Math.random()*w,cy=Math.random()*h,cr=1.5+Math.random()*5;
+    g.fillStyle='rgba(230,230,230,.75)'; g.beginPath(); g.arc(cx,cy,cr,0,7); g.fill();
+    g.fillStyle='rgba(30,30,30,.8)'; g.beginPath(); g.arc(cx,cy,cr*0.55,0,7); g.fill();
+  }
+  // panel-edge wear bands (catches light on armor edges via bump)
+  g.strokeStyle='rgba(200,200,200,.35)'; g.lineWidth=2;
+  for(var e2=0;e2<22;e2++){ var ey=Math.random()*h; g.beginPath(); g.moveTo(0,ey); g.lineTo(w,ey+(Math.random()-0.5)*30); g.stroke(); }
+  for(var k=0;k<44;k++){ // darker grime patches
+    var gx=Math.random()*w,gy=Math.random()*h,gr=20+Math.random()*80;
+    var rad=g.createRadialGradient(gx,gy,0,gx,gy,gr);
+    rad.addColorStop(0,'rgba(35,35,35,.4)'); rad.addColorStop(1,'rgba(35,35,35,0)');
+    g.fillStyle=rad; g.fillRect(gx-gr,gy-gr,gr*2,gr*2);
+  }
+});
+wearTex.repeat.set(3,3);
+// brushed metal grain
+var brushTex=canvasTex(512,512,function(g,w,h){
+  g.fillStyle='#808080'; g.fillRect(0,0,w,h);
+  for(var i=0;i<2400;i++){
+    var v=95+Math.random()*70|0, y=Math.random()*h;
+    g.strokeStyle='rgba('+v+','+v+','+v+',.55)'; g.lineWidth=1;
+    g.beginPath(); g.moveTo(0,y); g.lineTo(w,y+(Math.random()-0.5)*3); g.stroke();
+  }
+});
+brushTex.repeat.set(1,3);
+// studio softbox environment (equirect) → PMREM for true metal reflections.
+// Deferred until after first paint: PMREM generation is heavy under software
+// WebGL and must not block page load; materials pick the env up when it lands.
+// Skipped entirely on software renderers (SwiftShader/llvmpipe), where PMREM
+// can wedge the GPU process — lights alone carry those clients.
+function isSoftwareGL(){
+  try{
+    var gl=renderer.getContext();
+    var ext=gl.getExtension('WEBGL_debug_renderer_info');
+    if(ext){ var r=String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||''); return /swiftshader|llvmpipe|softpipe|software/i.test(r); }
+  }catch(e){}
+  return false;
+}
+if(isSoftwareGL()){ renderer.setPixelRatio(1); renderer.shadowMap.enabled=false; } // software rasterizers: skip the extra shadow pass so frames stay fast
+if(!isSoftwareGL()) setTimeout(function(){
+try{
+  var envTex=canvasTex(384,192,function(g,w,h){
+    var grad=g.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,'#0a1224'); grad.addColorStop(0.42,'#26334d');
+    grad.addColorStop(0.55,'#4a5a76'); grad.addColorStop(0.62,'#141a26'); grad.addColorStop(1,'#04060a');
+    g.fillStyle=grad; g.fillRect(0,0,w,h);
+    function softbox(x,y,bw,bh,color,alpha){
+      var r=g.createRadialGradient(x,y,0,x,y,Math.max(bw,bh));
+      r.addColorStop(0,color); r.addColorStop(1,'rgba(0,0,0,0)');
+      g.globalAlpha=alpha; g.fillStyle=r; g.fillRect(x-bw*1.6,y-bh*1.6,bw*3.2,bh*3.2); g.globalAlpha=1;
+      g.fillStyle='#ffffff'; g.fillRect(x-bw/2,y-bh/2,bw,bh);
+    }
+    softbox(300,120,300,44,'rgba(255,255,255,.95)',0.95);   // key softbox
+    softbox(760,150,190,30,'rgba(160,195,255,.9)',0.8);     // cool strip
+    softbox(90,210,26,120,'rgba(255,120,80,.85)',0.7);      // warm kicker
+    softbox(950,230,20,100,'rgba(120,170,255,.8)',0.7);
+    g.fillStyle='rgba(255,255,255,.9)'; g.fillRect(0,268,w,5); // horizon strip
+  },true);
+  envTex.mapping=THREE.EquirectangularReflectionMapping;
+  var pmrem=new THREE.PMREMGenerator(renderer);
+  scene.environment=pmrem.fromEquirectangular(envTex).texture;
+  pmrem.dispose();
+}catch(e){ /* lights alone still carry the scene */ }
+},2600);
 
 // Orbit controls — use bundled addon when present, otherwise built-in fallback so page never crashes
 function FallbackOrbit(cam, dom){
@@ -155,160 +252,701 @@ if(!controls) controls=new FallbackOrbit(camera, renderer.domElement);
 controls.target.set(0,1.35,0); if('enableDamping' in controls) controls.enableDamping=true; if('dampingFactor' in controls) controls.dampingFactor=0.06;
 controls.maxPolarAngle=Math.PI*0.52; controls.minDistance=2.2; controls.maxDistance=14;
 
-// Environment for metal reflections — lightweight: hemisphere + lights (no PMREM, keeps first load fast in software WebGL)
-scene.add(new THREE.HemisphereLight(0xbcd3ff,0x1a1210,0.9));
-
-// Lights
-scene.add(new THREE.AmbientLight(0x8899bb,0.55));
-var key=new THREE.DirectionalLight(0xffffff,2.2); key.position.set(5,8,4); key.castShadow=true;
-key.shadow.mapSize.set(1024,1024); key.shadow.camera.left=-6; key.shadow.camera.right=6; key.shadow.camera.top=6; key.shadow.camera.bottom=-6; key.shadow.bias=-0.0004;
+// ---------- Cinematic lighting ----------
+scene.add(new THREE.HemisphereLight(0xbdd2f5,0x191009,0.62));
+var key=new THREE.DirectionalLight(0xfff2e0,2.6); key.position.set(5,8.5,4); key.castShadow=true;
+key.shadow.mapSize.set(1024,1024); key.shadow.camera.left=-6; key.shadow.camera.right=6; key.shadow.camera.top=7; key.shadow.camera.bottom=-4; key.shadow.bias=-0.0003; key.shadow.normalBias=0.02; key.shadow.radius=4;
 scene.add(key);
-var rim=new THREE.DirectionalLight(0x3b82f6,1.4); rim.position.set(-6,4,-6); scene.add(rim);
-var warm=new THREE.PointLight(0xff3b30,18,12); warm.position.set(-3,1.2,3); scene.add(warm);
-var spot=new THREE.SpotLight(0xffffff,80,20,Math.PI/5,0.45,1.2); spot.position.set(0,7,0); spot.target.position.set(0,0,0); scene.add(spot); scene.add(spot.target);
+var rim=new THREE.DirectionalLight(0x5b9bff,2.0); rim.position.set(-6,4.5,-6); scene.add(rim);
+var fill=new THREE.DirectionalLight(0x93a7c9,0.55); fill.position.set(-4,2.5,5); scene.add(fill);
+var warm=new THREE.PointLight(0xff4a2e,14,11,1.6); warm.position.set(-3.2,0.9,3.2); scene.add(warm);
+var spot=new THREE.SpotLight(0xf4f7ff,90,22,Math.PI/5.2,0.5,1.3); spot.position.set(0,7.5,0.6); spot.target.position.set(0,0,0); scene.add(spot); scene.add(spot.target);
 
-// Ground — dark showroom disc + rings
-var ground=new THREE.Mesh(new THREE.CircleGeometry(9,64), new THREE.MeshStandardMaterial({color:0x111827,roughness:0.55,metalness:0.35}));
+// ---------- Showroom stage ----------
+var backdrop=new THREE.Mesh(
+  new THREE.CylinderGeometry(17,17,13,48,1,true),
+  new THREE.MeshBasicMaterial({map:canvasTex(64,512,function(g,w,h){
+    var gr=g.createLinearGradient(0,0,0,h);
+    gr.addColorStop(0,'#02040a'); gr.addColorStop(0.45,'#0a1526'); gr.addColorStop(0.72,'#0d1626'); gr.addColorStop(1,'#05080f');
+    g.fillStyle=gr; g.fillRect(0,0,w,h);
+  },true), side:THREE.BackSide, fog:false})
+);
+backdrop.position.y=4.5; scene.add(backdrop);
+// polished dark floor — low roughness picks up the studio env like a showroom
+var ground=new THREE.Mesh(new THREE.CircleGeometry(10,72), new THREE.MeshStandardMaterial({color:0x11161f,roughness:0.32,metalness:0.72,envMapIntensity:0.85}));
 ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
-var ringMat=new THREE.MeshBasicMaterial({color:0x2563eb,transparent:true,opacity:0.55});
-[2.2,3.4].forEach(function(r){ var ring=new THREE.Mesh(new THREE.RingGeometry(r,r+0.035,80),ringMat); ring.rotation.x=-Math.PI/2; ring.position.y=0.002; scene.add(ring); });
-var grid=new THREE.PolarGridHelper(8.8,12,6,64,0x1e3a5f,0x16233d); grid.position.y=0.001; grid.material.transparent=true; grid.material.opacity=0.35; scene.add(grid);
-// backdrop pillars
-for(var i=0;i<10;i++){ var a=i/10*Math.PI*2; var p=new THREE.Mesh(new THREE.BoxGeometry(0.28,3.2,0.28), new THREE.MeshStandardMaterial({color:0x1f2937,roughness:0.6,metalness:0.6,emissive:0x0b1e3a,emissiveIntensity:0.6})); p.position.set(Math.cos(a)*8.2,1.6,Math.sin(a)*8.2); scene.add(p); }
+var stageDisc=new THREE.Mesh(new THREE.CircleGeometry(4.6,72), new THREE.MeshStandardMaterial({color:0x0c1220,roughness:0.16,metalness:0.85,envMapIntensity:1.1}));
+stageDisc.rotation.x=-Math.PI/2; stageDisc.position.y=0.004; stageDisc.receiveShadow=true; scene.add(stageDisc);
+var ringMat=new THREE.MeshBasicMaterial({color:0x3b82f6,transparent:true,opacity:0.5});
+[2.2,3.4,4.55].forEach(function(r){ var ring=new THREE.Mesh(new THREE.RingGeometry(r,r+0.03,90),ringMat); ring.rotation.x=-Math.PI/2; ring.position.y=0.008; scene.add(ring); });
+var grid=new THREE.PolarGridHelper(9.6,12,5,72,0x24466e,0x152540); grid.position.y=0.002; grid.material.transparent=true; grid.material.opacity=0.3; scene.add(grid);
+// backdrop light towers
+for(var i=0;i<10;i++){ var a=i/10*Math.PI*2+0.31;
+  var tower=new THREE.Mesh(new THREE.BoxGeometry(0.22,4.4,0.22), new THREE.MeshStandardMaterial({color:0x131a26,roughness:0.45,metalness:0.75}));
+  tower.position.set(Math.cos(a)*8.6,2.2,Math.sin(a)*8.6); scene.add(tower);
+  var strip=new THREE.Mesh(new THREE.BoxGeometry(0.05,3.4,0.05), new THREE.MeshStandardMaterial({color:0x0b1e3a,emissive:0x2f6fd0,emissiveIntensity:1.5,roughness:0.4,metalness:0.2}));
+  strip.position.set(Math.cos(a)*8.42,2.2,Math.sin(a)*8.42); scene.add(strip);
+}
+// drifting dust motes for depth
+var dustGeo=new THREE.BufferGeometry(); var dustPos=new Float32Array(240*3);
+for(var di=0;di<240;di++){ dustPos[di*3]=(Math.random()-0.5)*15; dustPos[di*3+1]=Math.random()*5.5+0.2; dustPos[di*3+2]=(Math.random()-0.5)*15; }
+dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
+var dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:0x9db8dd,size:0.035,transparent:true,opacity:0.5,depthWrite:false}));
+scene.add(dust);
 
-// ---------- Materials ----------
+// ---------- PBR materials (car-paint clearcoat + real metals + wear maps) ----------
+function paint(c,extra){
+  var o={color:c,roughness:0.27,metalness:0.32,clearcoat:1.0,clearcoatRoughness:0.14,roughnessMap:wearTex,bumpMap:wearTex,bumpScale:0.9,envMapIntensity:1.3};
+  if(extra)for(var k in extra)o[k]=extra[k];
+  return new THREE.MeshPhysicalMaterial(o);
+}
+function metal(c,r,extra){
+  var o={color:c,roughness:r,metalness:1.0,roughnessMap:brushTex,bumpMap:brushTex,bumpScale:0.25,envMapIntensity:1.25};
+  if(extra)for(var k in extra)o[k]=extra[k];
+  return new THREE.MeshStandardMaterial(o);
+}
 function std(c,r,m,extra){ var o={color:c,roughness:r,metalness:m}; if(extra)for(var k in extra)o[k]=extra[k]; return new THREE.MeshStandardMaterial(o); }
 var MAT={
-  red: std(0xc1272d,0.32,0.65),
-  redDark: std(0x8f1d22,0.38,0.6),
-  blue: std(0x1d4ed8,0.34,0.62),
-  blueDark: std(0x1e3a8a,0.4,0.55),
-  silver: std(0xc7ccd6,0.22,0.95),
-  chrome: std(0xe8edf5,0.12,1.0),
-  dark: std(0x1f2937,0.55,0.7),
-  black: std(0x0b0f16,0.7,0.4),
-  tire: std(0x111318,0.92,0.05),
-  gold: std(0xd97706,0.3,0.8),
-  glass: new THREE.MeshPhysicalMaterial({color:0x7dd3fc,roughness:0.08,metalness:0.1,transparent:true,opacity:0.92,emissive:0x0e4a66,emissiveIntensity:0.7,clearcoat:1}),
-  eye: std(0x00e5ff,0.2,0.2,{emissive:0x00cfff,emissiveIntensity:2.6}),
-  light: std(0xfff7cc,0.3,0.2,{emissive:0xffd166,emissiveIntensity:1.6}),
-  redLight: std(0xff2222,0.3,0.2,{emissive:0xff0000,emissiveIntensity:1.4})
+  red: paint(0xb01218),
+  redDark: paint(0x7d0d13,{roughness:0.4}),
+  redFlame: paint(0xd21f26,{roughness:0.28}),
+  blue: paint(0x1447b8),
+  blueDark: paint(0x0f2f78,{roughness:0.4}),
+  steel: metal(0xb9c0cb,0.34),
+  steelDark: metal(0x767e8a,0.46),
+  chrome: metal(0xf2f5f9,0.1),
+  brushed: metal(0x9aa3ae,0.5),
+  dark: std(0x232a35,0.52,0.85,{roughnessMap:brushTex}),
+  joint: std(0x141a22,0.42,0.9),
+  black: std(0x0a0d12,0.78,0.35),
+  tire: std(0x0e1013,0.94,0.04),
+  gold: metal(0xd08a1d,0.3),
+  copper: metal(0xb0662f,0.38),
+  glass: new THREE.MeshPhysicalMaterial({color:0x8fd8f2,roughness:0.05,metalness:0,transparent:true,opacity:0.88,envMapIntensity:2.2,emissive:0x0d3a52,emissiveIntensity:0.55,clearcoat:1,clearcoatRoughness:0.05}),
+  glassDark: new THREE.MeshPhysicalMaterial({color:0x2c5f7d,roughness:0.06,metalness:0.1,transparent:true,opacity:0.94,envMapIntensity:1.8,emissive:0x082a40,emissiveIntensity:0.5,clearcoat:1}),
+  eye: std(0x66f2ff,0.25,0.1,{emissive:0x18c8ff,emissiveIntensity:3.2}),
+  light: std(0xfff3c4,0.3,0.15,{emissive:0xffc94d,emissiveIntensity:2.0}),
+  amber: std(0xffb03a,0.3,0.15,{emissive:0xff8a00,emissiveIntensity:1.5}),
+  redLight: std(0xff2a22,0.3,0.15,{emissive:0xff1206,emissiveIntensity:1.7}),
+  seam: std(0x05070a,0.85,0.3)
 };
 function box(w,h,d,mat,x,y,z,parent){
   var geo;
-  try{ geo=new THREE.RoundedBoxGeometry(w,h,d,2,Math.min(0.035,Math.min(w,h,d)*0.18)); }catch(e){ geo=new THREE.BoxGeometry(w,h,d); }
+  try{ geo=new THREE.RoundedBoxGeometry(w,h,d,2,Math.min(0.028,Math.min(w,h,d)*0.16)); }catch(e){ geo=new THREE.BoxGeometry(w,h,d); }
   var m=new THREE.Mesh(geo,mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; m.receiveShadow=true; if(parent)parent.add(m); return m;
 }
+function plate(w,h,d,mat,x,y,z,parent){ // plain sharp box for thin panels / seams / slats
+  var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; m.receiveShadow=true; if(parent)parent.add(m); return m;
+}
 function cyl(rt,rb,h,mat,x,y,z,parent,seg){
-  var m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||20),mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; if(parent)parent.add(m); return m;
+  var m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||24),mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; m.receiveShadow=true; if(parent)parent.add(m); return m;
+}
+function piston(r,len,x,y,z,parent){ // hydraulic rod: dark sleeve + chrome shaft, vertical
+  var g=new THREE.Group(); g.position.set(x,y,z);
+  cyl(r*1.45,r*1.45,len*0.55,MAT.joint,0,len*0.22,0,g,14);
+  cyl(r,r,len*0.6,MAT.chrome,0,-len*0.18,0,g,14);
+  if(parent)parent.add(g); return g;
+}
+function vents(n,w,gap,mat,x,y,z,parent,vertical){ // row of thin slats
+  for(var i=0;i<n;i++){
+    var off=(i-(n-1)/2)*gap;
+    if(vertical) plate(0.018,w,0.02,mat,x+off,y,z,parent);
+    else plate(w,0.018,0.02,mat,x,y+off,z,parent);
+  }
 }
 function wheel(r,w,parent,x,y,z){
   var g=new THREE.Group(); g.position.set(x,y,z);
-  var tire=new THREE.Mesh(new THREE.CylinderGeometry(r,r,w,28),MAT.tire); tire.rotation.z=Math.PI/2; tire.castShadow=true; g.add(tire);
-  var hub=new THREE.Mesh(new THREE.CylinderGeometry(r*0.55,r*0.55,w+0.02,20),MAT.silver); hub.rotation.z=Math.PI/2; g.add(hub);
-  var cap=new THREE.Mesh(new THREE.CylinderGeometry(r*0.22,r*0.22,w+0.04,12),MAT.red); cap.rotation.z=Math.PI/2; g.add(cap);
+  var tire=new THREE.Mesh(new THREE.CylinderGeometry(r,r,w,36),MAT.tire); tire.rotation.z=Math.PI/2; tire.castShadow=true; tire.receiveShadow=true; g.add(tire);
+  // sidewall rings
+  [-1,1].forEach(function(s){
+    var sw=new THREE.Mesh(new THREE.TorusGeometry(r*0.8,w*0.16,10,36),MAT.black);
+    sw.rotation.y=Math.PI/2; sw.position.x=s*w*0.46; g.add(sw);
+  });
+  // tread blocks
+  var treadN=14;
+  for(var ti=0;ti<treadN;ti++){
+    var ta=ti/treadN*Math.PI*2;
+    var tb=new THREE.Mesh(new THREE.BoxGeometry(w*0.92,r*0.11,r*0.24),MAT.black);
+    tb.position.set(0,Math.cos(ta)*r*0.99,Math.sin(ta)*r*0.99); tb.rotation.x=-ta; tb.castShadow=true; g.add(tb);
+  }
+  // spoked hub
+  var hub=new THREE.Mesh(new THREE.CylinderGeometry(r*0.62,r*0.62,w*0.7,24),MAT.steelDark); hub.rotation.z=Math.PI/2; g.add(hub);
+  for(var si=0;si<5;si++){
+    var sa=si/5*Math.PI*2;
+    var spoke=new THREE.Mesh(new THREE.BoxGeometry(w*0.78,r*0.17,r*0.5),MAT.steel);
+    spoke.position.set(0,Math.cos(sa)*r*0.3,Math.sin(sa)*r*0.3); spoke.rotation.x=-sa; g.add(spoke);
+  }
+  var cap=new THREE.Mesh(new THREE.CylinderGeometry(r*0.2,r*0.2,w*0.95,16),MAT.red); cap.rotation.z=Math.PI/2; g.add(cap);
+  var nut=new THREE.Mesh(new THREE.CylinderGeometry(r*0.08,r*0.08,w*1.05,6),MAT.chrome); nut.rotation.z=Math.PI/2; g.add(nut);
   if(parent)parent.add(g); return g;
 }
 
-// ---------- Build Optimus (hierarchical joints) ----------
+// ---------- Build Optimus (hierarchical joints, layered real-machine detail) ----------
 var root=new THREE.Group(); scene.add(root);
-var hips=new THREE.Group(); hips.position.set(0,1.24,0); root.add(hips);
+var hips=new THREE.Group(); hips.position.set(0,1.48,0); root.add(hips);
 
-// Pelvis
-box(0.62,0.26,0.38,MAT.blueDark,0,0,0,hips);
-box(0.66,0.10,0.40,MAT.silver,0,0.10,0,hips);
-box(0.18,0.14,0.06,MAT.gold,0,-0.02,0.20,hips); // belt buckle
+// ----- Pelvis: layered codpiece, belt, side skirts, hip hydraulics -----
+box(0.58,0.24,0.36,MAT.blueDark,0,0,0,hips);
+box(0.62,0.09,0.39,MAT.steelDark,0,0.115,0,hips);              // belt line
+box(0.34,0.07,0.02,MAT.seam,0,0.115,0.2,hips);
+var buckle=box(0.15,0.11,0.05,MAT.gold,0,0.02,0.19,hips);
+box(0.07,0.05,0.02,MAT.redLight,0,0.02,0.22,hips);
+box(0.24,0.20,0.05,MAT.blue,0,-0.10,0.15,hips);                 // codpiece
+plate(0.16,0.02,0.02,MAT.seam,0,-0.05,0.18,hips);
+[-1,1].forEach(function(s){
+  var skirt=box(0.10,0.26,0.34,MAT.redDark,s*0.33,-0.06,0,hips); skirt.rotation.z=s*0.1; // side skirts
+  box(0.05,0.18,0.26,MAT.steelDark,s*0.37,-0.05,0,hips);
+  piston(0.028,0.2,s*0.13,0.02,0.1,hips); piston(0.028,0.2,s*0.13,0.02,-0.1,hips);
+});
 
-// Torso joint
+// ----- Torso joint -----
 var torso=new THREE.Group(); torso.position.set(0,0.14,0); hips.add(torso);
-box(0.92,0.78,0.52,MAT.red,0,0.42,0,torso); // chest
-// Windshields — two windows cut look: glass panels on chest front
-box(0.38,0.34,0.04,MAT.glass,-0.21,0.56,0.27,torso);
-box(0.38,0.34,0.04,MAT.glass, 0.21,0.56,0.27,torso);
-box(0.06,0.36,0.05,MAT.silver,0,0.56,0.27,torso);
-box(0.86,0.10,0.04,MAT.silver,0,0.34,0.27,torso); // wiper bar / trim
-// Grille abdomen
-for(var gi=0;gi<3;gi++) box(0.56,0.055,0.03,MAT.chrome,0,0.16-gi*0.09,0.24,torso);
-box(0.60,0.30,0.40,MAT.silver,0,0.12,-0.02,torso);
-// Chest lights + Autobot-ish emblem (simple gold diamond, no logo copy)
-box(0.10,0.10,0.03,MAT.light,-0.36,0.22,0.27,torso);
-box(0.10,0.10,0.03,MAT.light, 0.36,0.22,0.27,torso);
-var emblem=box(0.16,0.16,0.02,MAT.gold,0,0.56,0.285,torso); emblem.rotation.z=Math.PI/4;
-// Backpack (truck cab back)
-box(0.78,0.62,0.18,MAT.redDark,0,0.44,-0.34,torso);
-box(0.70,0.10,0.20,MAT.silver,0,0.82,-0.34,torso);
+// abdomen: segmented silver plates over dark core
+box(0.52,0.30,0.34,MAT.joint,0,0.10,0,torso);
+[-0.02,0.09,0.20].forEach(function(y,i){
+  box(0.56-i*0.03,0.075,0.05,MAT.steel,0,y,0.17,torso);
+  plate(0.56-i*0.03,0.016,0.02,MAT.seam,0,y-0.045,0.175,torso);
+});
+vents(5,0.05,0.075,MAT.seam,0,0.10,0.2,torso,true);
+// waist hydraulics torso→pelvis
+[-1,1].forEach(function(s){ piston(0.03,0.24,s*0.24,0.02,0.08,torso); piston(0.03,0.24,s*0.24,0.02,-0.08,torso); });
+// chest block (cab front) — tapered feel via layered plates
+box(0.94,0.72,0.50,MAT.red,0,0.55,0,torso);
+box(0.98,0.16,0.53,MAT.redFlame,0,0.86,0,torso);                // shoulder yoke
+box(0.90,0.10,0.46,MAT.redDark,0,0.24,0,torso);                 // lower chest band
+plate(0.94,0.02,0.02,MAT.seam,0,0.30,0.24,torso);
+// windshield pair: dark frames, mullions, glass, wipers
+[-1,1].forEach(function(s){
+  box(0.40,0.36,0.05,MAT.dark,s*0.22,0.66,0.245,torso);         // frame
+  box(0.35,0.30,0.03,MAT.glass,s*0.22,0.665,0.265,torso);       // glass
+  plate(0.03,0.30,0.02,MAT.steelDark,s*0.22,0.665,0.28,torso);  // center mullion
+  var wiper=plate(0.20,0.016,0.014,MAT.black,s*0.20,0.545,0.285,torso); wiper.rotation.z=s*0.42; // wiper blade
+  plate(0.05,0.05,0.02,MAT.steelDark,s*0.115,0.53,0.285,torso);
+});
+plate(0.05,0.38,0.05,MAT.steel,0,0.66,0.25,torso);              // center divider
+plate(0.88,0.035,0.03,MAT.chrome,0,0.455,0.26,torso);           // chrome brow under glass
+// grille: frame + vertical chrome slats + bumper bar
+box(0.62,0.17,0.05,MAT.dark,0,0.345,0.245,torso);
+vents(7,0.12,0.082,MAT.chrome,0,0.345,0.27,torso,true);
+plate(0.62,0.025,0.02,MAT.chrome,0,0.345,0.272,torso);
+box(0.86,0.07,0.06,MAT.steelDark,0,0.225,0.25,torso);           // bumper
+// round headlights in chrome bezels + amber markers
+[-1,1].forEach(function(s){
+  var bez=cyl(0.052,0.052,0.03,MAT.chrome,s*0.40,0.345,0.26,torso); bez.rotation.x=Math.PI/2;
+  var lens=cyl(0.042,0.042,0.02,MAT.light,s*0.40,0.345,0.275,torso); lens.rotation.x=Math.PI/2;
+  box(0.07,0.045,0.02,MAT.amber,s*0.44,0.47,0.26,torso);
+  box(0.06,0.05,0.02,MAT.redLight,s*0.44,0.26,0.26,torso);
+});
+// Matrix chamber glow behind center grille diamond
+var emblem=box(0.13,0.13,0.02,MAT.eye,0,0.66,0.272,torso); emblem.rotation.z=Math.PI/4;
+plate(0.05,0.05,0.012,MAT.gold,0,0.66,0.28,torso);
+// chest side intake vents
+[-1,1].forEach(function(s){ vents(3,0.035,0.05,MAT.seam,s*0.478,0.6,0.1,torso,false); });
+// Backpack: twin fuel tanks, crossbar, rear panel, exhaust tips
+box(0.74,0.60,0.14,MAT.redDark,0,0.56,-0.33,torso);
+[-1,1].forEach(function(s){
+  var tank=cyl(0.085,0.085,0.52,MAT.brushed,s*0.24,0.56,-0.44,torso); tank.castShadow=true;
+  cyl(0.05,0.065,0.05,MAT.steelDark,s*0.24,0.845,-0.44,torso);
+  cyl(0.05,0.065,0.05,MAT.steelDark,s*0.24,0.275,-0.44,torso);
+});
+box(0.66,0.07,0.10,MAT.steelDark,0,0.90,-0.40,torso);
+vents(6,0.05,0.09,MAT.seam,0,0.42,-0.405,torso,true);
 
-// Head joint
-var head=new THREE.Group(); head.position.set(0,0.90,0); torso.add(head);
-box(0.34,0.30,0.34,MAT.blue,0,0.16,0,head); // helmet
-box(0.30,0.22,0.06,MAT.silver,0,0.08,0.16,head); // faceplate
-box(0.26,0.07,0.03,MAT.eye,0,0.22,0.175,head); // eyes visor
-box(0.36,0.08,0.36,MAT.blueDark,0,0.33,0,head); // crest
-box(0.07,0.07,0.07,MAT.silver,0,0.40,0,head);
-// antennae / ears
-box(0.05,0.26,0.05,MAT.blue,-0.21,0.28,0,head);
-box(0.05,0.26,0.05,MAT.blue, 0.21,0.28,0,head);
-box(0.09,0.16,0.12,MAT.silver,-0.20,0.10,0,head);
-box(0.09,0.16,0.12,MAT.silver, 0.20,0.10,0,head);
-box(0.28,0.10,0.28,MAT.silver,0,-0.04,0,head); // neck collar
+// ----- Head joint: sculpted face, grille mouth, ear discs, crest + antennae -----
+var head=new THREE.Group(); head.position.set(0,0.93,0); torso.add(head);
+cyl(0.085,0.10,0.09,MAT.joint,0,-0.015,0,head);                 // neck
+box(0.30,0.09,0.30,MAT.steelDark,0,-0.055,0,head);              // collar
+box(0.335,0.30,0.335,MAT.blue,0,0.17,0,head);                   // helmet shell
+box(0.345,0.07,0.345,MAT.blueDark,0,0.315,0,head);              // helmet crown band
+// face
+box(0.27,0.24,0.05,MAT.steel,0,0.115,0.155,head);               // faceplate
+box(0.20,0.06,0.03,MAT.steelDark,0,0.005,0.165,head);           // chin / jaw
+plate(0.24,0.02,0.02,MAT.seam,0,0.065,0.175,head);
+vents(4,0.035,0.045,MAT.seam,0,0.032,0.182,head,true);         // mouth grille
+[-1,1].forEach(function(s){
+  var cheek=box(0.055,0.15,0.04,MAT.steelDark,s*0.125,0.10,0.15,head); cheek.rotation.y=s*0.35;
+  vents(2,0.03,0.035,MAT.seam,s*0.148,0.075,0.155,head,false);
+});
+// eyes: shallow recess + large glowing lenses + brow ridge
+box(0.26,0.058,0.03,MAT.black,0,0.238,0.16,head);
+[-1,1].forEach(function(s){ box(0.102,0.056,0.02,MAT.eye,s*0.068,0.238,0.174,head); });
+box(0.30,0.045,0.05,MAT.blueDark,0,0.285,0.155,head);           // brow
+// crest fin + center spike
+var fin=box(0.035,0.15,0.20,MAT.blue,0,0.40,-0.01,head); fin.rotation.x=-0.08;
+box(0.05,0.06,0.05,MAT.steel,0,0.475,-0.02,head);
+// ear discs + antennae
+[-1,1].forEach(function(s){
+  var ear=cyl(0.062,0.062,0.045,MAT.steelDark,s*0.185,0.14,0,head); ear.rotation.z=Math.PI/2;
+  var dot=cyl(0.028,0.028,0.055,MAT.blue,s*0.185,0.14,0,head); dot.rotation.z=Math.PI/2;
+  var ant=cyl(0.006,0.016,0.34,MAT.blue,s*0.155,0.44,-0.02,head); ant.rotation.z=-s*0.1;
+  var tip=new THREE.Mesh(new THREE.SphereGeometry(0.014,10,10),MAT.steel); tip.position.set(s*0.172,0.615,-0.02); tip.castShadow=true; head.add(tip);
+  box(0.045,0.10,0.09,MAT.steelDark,s*0.185,0.26,0,head);       // ear housing
+});
 
-// Arms builder
+// ----- Arms: layered pauldrons, smokestacks, pistons, fingered fists -----
 function buildArm(side){ // side -1 left, +1 right
-  var sh=new THREE.Group(); sh.position.set(side*0.58,0.72,0); torso.add(sh);
-  // shoulder pauldron + smokestack
-  box(0.30,0.30,0.42,MAT.red,side*0.06,0.06,0,sh);
-  box(0.32,0.08,0.44,MAT.silver,side*0.06,0.23,0,sh);
-  var stack=cyl(0.045,0.045,0.52,MAT.chrome,side*0.10,0.28,-0.14,sh); // smokestack
-  cyl(0.06,0.06,0.08,MAT.dark,side*0.10,0.02,-0.14,sh);
-  // upper arm (hangs down from shoulder pivot)
-  box(0.20,0.42,0.22,MAT.silver,0,-0.28,0,sh);
-  box(0.22,0.14,0.24,MAT.red,0,-0.12,0,sh);
+  var sh=new THREE.Group(); sh.position.set(side*0.60,0.74,0); torso.add(sh);
+  var ball=new THREE.Mesh(new THREE.SphereGeometry(0.115,20,16),MAT.joint); ball.castShadow=true; sh.add(ball);
+  // layered pauldron
+  box(0.34,0.13,0.46,MAT.red,side*0.07,0.115,0,sh);
+  box(0.30,0.11,0.42,MAT.redFlame,side*0.07,0.225,0,sh);
+  box(0.26,0.06,0.38,MAT.steelDark,side*0.07,0.305,0,sh);
+  plate(0.345,0.02,0.465,MAT.seam,side*0.07,0.05,0,sh);
+  box(0.05,0.05,0.03,MAT.amber,side*0.20,0.16,0.20,sh);         // pauldron marker light
+  // smokestack: chrome pipe + flared tip + dark base, behind shoulder
+  cyl(0.055,0.055,0.09,MAT.joint,side*0.10,0.03,-0.17,sh);
+  cyl(0.042,0.042,0.55,MAT.chrome,side*0.10,0.33,-0.17,sh);
+  cyl(0.058,0.044,0.09,MAT.steelDark,side*0.10,0.63,-0.17,sh);
+  // upper arm: dark core + armor shells + bicep piston
+  box(0.185,0.42,0.21,MAT.joint,0,-0.27,0,sh);
+  box(0.225,0.30,0.25,MAT.steel,0,-0.24,0,sh);
+  box(0.235,0.13,0.26,MAT.red,0,-0.115,0,sh);
+  plate(0.02,0.24,0.02,MAT.seam,side*0.118,-0.26,0,sh);
+  piston(0.024,0.3,side*0.125,-0.25,-0.09,sh);
   var el=new THREE.Group(); el.position.set(0,-0.50,0); sh.add(el);
-  cyl(0.09,0.09,0.22,MAT.dark,0,0,0,el).rotation.z=Math.PI/2;
-  // forearm — boxy truck-door forearm
-  box(0.24,0.44,0.28,MAT.blue,0,-0.26,0,el);
-  box(0.20,0.30,0.03,MAT.glass,0,-0.24,0.15,el);
-  box(0.26,0.08,0.30,MAT.silver,0,-0.04,0,el);
-  // fist
-  box(0.20,0.18,0.22,MAT.dark,0,-0.56,0,el);
+  var edisc=cyl(0.095,0.095,0.24,MAT.steelDark,0,0,0,el); edisc.rotation.z=Math.PI/2;
+  var ecap=cyl(0.05,0.05,0.26,MAT.chrome,0,0,0,el); ecap.rotation.z=Math.PI/2;
+  piston(0.02,0.34,side*0.10,-0.16,-0.10,el); piston(0.02,0.34,-side*0.10,-0.16,-0.10,el); // forearm hydraulics
+  // forearm: truck-door armor with window + panel seams
+  box(0.25,0.44,0.29,MAT.blue,0,-0.27,0,el);
+  box(0.27,0.09,0.31,MAT.steelDark,0,-0.045,0,el);               // wrist-side cuff top
+  box(0.215,0.30,0.02,MAT.blueDark,0,-0.27,0.15,el);             // door inset
+  box(0.17,0.19,0.015,MAT.glassDark,0,-0.235,0.163,el);          // door window
+  plate(0.215,0.018,0.012,MAT.seam,0,-0.40,0.158,el);
+  plate(0.018,0.30,0.012,MAT.seam,side*0.07,-0.27,0.158,el);
+  box(0.05,0.03,0.02,MAT.chrome,side*0.075,-0.155,0.16,el);      // door handle
+  vents(3,0.03,0.045,MAT.seam,0,-0.44,0.1,el,false);
+  // wrist + articulated fist (palm, 4 fingers, thumb)
+  cyl(0.075,0.075,0.07,MAT.joint,0,-0.515,0,el);
+  var fist=new THREE.Group(); fist.position.set(0,-0.60,0); el.add(fist);
+  box(0.20,0.11,0.21,MAT.dark,0,-0.03,0,fist);
+  for(var fi=0;fi<4;fi++){
+    var fx=-0.072+fi*0.048;
+    var f1=box(0.042,0.085,0.05,MAT.steelDark,fx,-0.115,0.045,fist); f1.rotation.x=0.5;
+    var f2=box(0.042,0.07,0.045,MAT.dark,fx,-0.155,0.085,fist); f2.rotation.x=1.15;
+  }
+  var thumb=box(0.045,0.10,0.05,MAT.steelDark,-side*0.115,-0.07,0.05,fist); thumb.rotation.z=side*0.5; thumb.rotation.x=0.4;
   return {sh:sh, el:el};
 }
 var armL=buildArm(-1), armR=buildArm(1);
 
-// Legs builder
+// ----- Legs: armored thighs, knee discs, vented shins, treaded calf wheels -----
 function buildLeg(side){
   var hip=new THREE.Group(); hip.position.set(side*0.20, -0.08, 0); hips.add(hip);
-  box(0.26,0.46,0.30,MAT.blueDark,0,-0.24,0,hip); // thigh
-  box(0.28,0.12,0.32,MAT.silver,0,-0.06,0,hip);
+  var hball=new THREE.Mesh(new THREE.SphereGeometry(0.10,18,14),MAT.joint); hball.castShadow=true; hip.add(hball);
+  box(0.25,0.44,0.29,MAT.joint,0,-0.25,0,hip);                    // thigh core
+  box(0.28,0.36,0.06,MAT.blue,0,-0.24,0.135,hip);                 // thigh front armor
+  box(0.29,0.11,0.32,MAT.steelDark,0,-0.055,0,hip);               // hip ring
+  plate(0.02,0.30,0.02,MAT.seam,0,-0.24,0.168,hip);
+  box(0.05,0.20,0.05,MAT.redDark,side*0.145,-0.22,0.08,hip);      // thigh side pod
+  piston(0.026,0.34,side*0.14,-0.24,-0.10,hip);
   var knee=new THREE.Group(); knee.position.set(0,-0.50,0); hip.add(knee);
-  cyl(0.10,0.10,0.28,MAT.dark,0,0,0,knee).rotation.z=Math.PI/2;
-  box(0.30,0.50,0.34,MAT.blue,0,-0.28,0,knee); // shin
-  box(0.32,0.16,0.36,MAT.red,0,-0.10,0,knee);
-  box(0.26,0.28,0.03,MAT.silver,0,-0.30,0.18,knee);
+  var kdisc=cyl(0.105,0.105,0.29,MAT.steelDark,0,0,0,knee); kdisc.rotation.z=Math.PI/2;
+  var kcap=cyl(0.055,0.055,0.31,MAT.chrome,0,0,0,knee); kcap.rotation.z=Math.PI/2;
+  box(0.20,0.14,0.06,MAT.red,0,-0.01,0.155,knee);                 // knee pad
+  plate(0.14,0.02,0.02,MAT.seam,0,-0.01,0.188,knee);
+  // shin: blue armor, silver front plate with grooves, side vents
+  box(0.30,0.50,0.34,MAT.blue,0,-0.29,0,knee);
+  box(0.32,0.13,0.36,MAT.redDark,0,-0.115,0,knee);                // shin top band
+  box(0.24,0.34,0.035,MAT.steel,0,-0.33,0.175,knee);              // front plate
+  plate(0.018,0.28,0.012,MAT.seam,-0.06,-0.33,0.195,knee);
+  plate(0.018,0.28,0.012,MAT.seam, 0.06,-0.33,0.195,knee);
+  vents(3,0.035,0.05,MAT.seam,side*0.158,-0.30,0.06,knee,false);
+  box(0.03,0.10,0.20,MAT.copper,side*0.155,-0.42,-0.05,knee);     // calf pipe
   // wheel on outer calf
-  var w=wheel(0.17,0.10,knee, side*0.22,-0.30,0);
-  // foot
+  var w=wheel(0.185,0.11,knee, side*0.235,-0.31,-0.02);
+  piston(0.022,0.3,side*0.10,-0.42,-0.13,knee);                   // ankle hydraulic
+  // foot: toe + heel + sole
   var foot=new THREE.Group(); foot.position.set(0,-0.56,0); knee.add(foot);
-  box(0.28,0.12,0.52,MAT.silver,0,-0.04,0.08,foot);
-  box(0.28,0.06,0.54,MAT.dark,0,-0.11,0.08,foot);
-  box(0.20,0.08,0.10,MAT.redLight,0,-0.02,0.32,foot);
+  box(0.27,0.11,0.30,MAT.steel,0,-0.045,0.16,foot);               // toe
+  plate(0.27,0.02,0.02,MAT.seam,0,-0.045,0.315,foot);
+  box(0.27,0.12,0.22,MAT.steelDark,0,-0.04,-0.10,foot);           // heel
+  box(0.28,0.055,0.54,MAT.black,0,-0.115,0.05,foot);              // sole
+  box(0.16,0.05,0.03,MAT.redLight,0,-0.03,0.315,foot);
+  box(0.05,0.07,0.16,MAT.red,side*0.145,-0.04,0.02,foot);         // ankle guard
   return {hip:hip,knee:knee,foot:foot,wheel:w};
 }
 var legL=buildLeg(-1), legR=buildLeg(1);
 
-// Truck-only parts (fade/scale in when transformed)
+// ============================================================
+// SCULPT DETAIL PASS — the "10,000-part" architecture.
+// Layered detail systems, all parented to the existing joints so
+// every added part moves with the rig:
+//   1) fasteners  — shared-geometry hex bolts / rivets (cheap draw calls)
+//   2) panel seams — thin dark inlay strips subdividing big armor plates
+//   3) greebles   — deterministic clusters of small mechanical blocks
+//   4) hoses      — TubeGeometry cable runs along limbs / neck / waist
+//   5) markings   — hazard stripes, energy conduit lines, hub hardware
+// ============================================================
+var _seed=1234567;
+function rnd(){ _seed=(_seed*16807)%2147483647; return (_seed-1)/2147483646; }
+var detailCount=0;
+var boltGeo=new THREE.CylinderGeometry(0.014,0.014,0.011,6);
+var boltGeoS=new THREE.CylinderGeometry(0.009,0.009,0.009,6);
+var rivetGeo=new THREE.SphereGeometry(0.0105,8,6);
+var hazardTex=canvasTex(128,128,function(g,w,h){
+  g.fillStyle='#c79a1e'; g.fillRect(0,0,w,h);
+  g.fillStyle='#14151a'; g.save(); g.translate(w/2,h/2); g.rotate(-0.65);
+  for(var i=-5;i<6;i+=2) g.fillRect(i*16,-h,16,h*2);
+  g.restore();
+},true);
+var hazardMat=std(0xffffff,0.55,0.4,{map:hazardTex});
+var cableMat=std(0x11151c,0.62,0.55);
+var conduitMat=std(0x0b2b3a,0.35,0.2,{emissive:0x1899c2,emissiveIntensity:1.6});
+function dMesh(geo,mat,x,y,z,parent,rx,ry,rz){
+  var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z);
+  if(rx)m.rotation.x=rx; if(ry)m.rotation.y=ry; if(rz)m.rotation.z=rz;
+  m.receiveShadow=true; if(parent)parent.add(m); detailCount++; return m;
+}
+function bolt(parent,x,y,z,rx,ry,rz,small){ return dMesh(small?boltGeoS:boltGeo,MAT.chrome,x,y,z,parent,rx||0,ry||0,rz||0); }
+function rivet(parent,x,y,z){ return dMesh(rivetGeo,MAT.steelDark,x,y,z,parent); }
+// rectangle of 8 front-facing bolts (corners + edge midpoints) on a +Z face
+function boltRectZ(parent,cx,cy,z,hw,hh,small){
+  var pts=[[-hw,-hh],[hw,-hh],[-hw,hh],[hw,hh],[0,-hh],[0,hh],[-hw,0],[hw,0]];
+  for(var i=0;i<8;i++) bolt(parent,cx+pts[i][0],cy+pts[i][1],z,Math.PI/2,0,0,small);
+}
+function boltRowZ(parent,x0,x1,y,z,n,small){ for(var i=0;i<n;i++) bolt(parent,x0+(x1-x0)*(n===1?0:i/(n-1)),y,z,Math.PI/2,0,0,small); }
+function boltRowY(parent,x0,x1,z,y,n,small){ for(var i=0;i<n;i++) bolt(parent,x0+(x1-x0)*(n===1?0:i/(n-1)),y,z,0,0,0,small); }
+// ring of bolts on an X-facing disc (elbow / knee / wheel hub)
+function boltRingX(parent,cx,cy,cz,r,n,small){
+  for(var i=0;i<n;i++){ var a=i/n*Math.PI*2; bolt(parent,cx,cy+Math.cos(a)*r,cz+Math.sin(a)*r,0,0,Math.PI/2,small); }
+}
+function seamZ(parent,cx,cy,z,w,h){ plate(w,h,0.012,MAT.seam,cx,cy,z,parent); detailCount++; }
+function hose(parent,pts,r,mat){
+  var v=pts.map(function(p){ return new THREE.Vector3(p[0],p[1],p[2]); });
+  var geo=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(v),14,r,7,false);
+  var m=new THREE.Mesh(geo,mat||cableMat); m.castShadow=true; m.receiveShadow=true; parent.add(m); detailCount++; return m;
+}
+var greebleMats=[MAT.dark,MAT.steelDark,MAT.joint,MAT.copper,MAT.brushed];
+function greeble(parent,cx,cy,cz,n,sx,sy,sz,thinAxis){
+  for(var i=0;i<n;i++){
+    var w2=0.02+rnd()*0.05,h2=0.015+rnd()*0.045,d2=0.02+rnd()*0.05;
+    if(thinAxis==='x') w2=0.022; if(thinAxis==='z') d2=0.022;
+    var m=box(w2,h2,d2,greebleMats[(rnd()*greebleMats.length)|0],
+      cx+(rnd()-0.5)*sx, cy+(rnd()-0.5)*sy, cz+(rnd()-0.5)*sz, parent);
+    if(rnd()<0.3) m.rotation.y=(rnd()-0.5)*0.4;
+    detailCount++;
+  }
+}
+
+// --- TORSO: windshield / chest / grille fasteners, seams, side machinery ---
+[-1,1].forEach(function(s){
+  boltRectZ(torso,s*0.22,0.66,0.278,0.185,0.165,true);            // windshield frame bolts
+  boltRectZ(torso,s*0.40,0.345,0.282,0.028,0.028,true);           // headlight bezel bolts (cluster)
+  seamZ(torso,s*0.36,0.60,0.253,0.014,0.52);                      // vertical chest panel split
+  greeble(torso,s*0.49,0.52,0.02,11,0.01,0.5,0.34,'x');           // side intake machinery
+  hose(torso,[[s*0.30,0.30,0.15],[s*0.37,0.10,0.20],[s*0.30,-0.03,0.13]],0.015); // waist hoses
+  hose(torso,[[s*0.13,0.86,-0.10],[s*0.18,0.99,-0.13],[s*0.11,1.07,-0.05]],0.016); // neck cables
+  hose(torso,[[s*0.09,0.86,-0.13],[s*0.13,0.98,-0.16],[s*0.08,1.05,-0.09]],0.009,MAT.copper);
+  plate(0.012,0.15,0.012,conduitMat,s*0.048,0.40,0.262,torso); detailCount++;      // energy conduits
+});
+seamZ(torso,0,0.50,0.253,0.90,0.016); seamZ(torso,0,0.79,0.253,0.92,0.016);
+boltRowZ(torso,-0.42,0.42,0.90,0.272,7,true);                     // yoke bolt row
+boltRowZ(torso,-0.38,0.38,0.225,0.288,6);                         // bumper bolts
+boltRectZ(torso,0,0.345,0.278,0.30,0.075,true);                   // grille frame bolts
+boltRectZ(torso,0,0.56,-0.408,0.33,0.26,true);                    // back panel bolt grid
+[-1,1].forEach(function(s){ for(var bi=0;bi<3;bi++){             // fuel-tank clamp bands
+  cyl(0.093,0.093,0.032,MAT.steelDark,s*0.24,0.38+bi*0.18,-0.44,torso); detailCount++;
+}});
+
+// --- HEAD: face rivets, brow bolts, ear-disc bolts, antenna rings, nose ---
+boltRowZ(head,-0.10,0.10,0.285,0.183,5,true);
+[-1,1].forEach(function(s){
+  bolt(head,s*0.128,0.315,0.172,Math.PI/2,0,0,true);
+  rivet(head,s*0.115,0.185,0.183); rivet(head,s*0.115,0.135,0.186);
+  boltRingX(head,s*0.212,0.14,0,0.046,4,true);                    // ear disc bolts
+  cyl(0.013,0.013,0.014,MAT.steel,s*0.163,0.37,-0.02,head); detailCount++;  // antenna rings
+  cyl(0.011,0.011,0.012,MAT.steelDark,s*0.168,0.50,-0.02,head); detailCount++;
+  bolt(head,s*0.09,0.02,0.183,Math.PI/2,0,0,true);                // jaw bolts
+});
+box(0.034,0.095,0.022,MAT.steel,0,0.148,0.183,head); detailCount++; // nose ridge
+plate(0.20,0.014,0.012,MAT.seam,0,0.252,0.178,head); detailCount++; // eye-slit divider line
+
+// --- PELVIS: belt bolts, codpiece + skirt fasteners ---
+boltRowZ(hips,-0.28,0.28,0.115,0.205,8,true);
+boltRectZ(hips,0,-0.10,0.18,0.10,0.08,true);
+[-1,1].forEach(function(s){ bolt(hips,s*0.335,0.03,0.175,Math.PI/2,0,0,true); bolt(hips,s*0.335,-0.16,0.175,Math.PI/2,0,0,true); });
+
+// --- ARMS: pauldron / shell / elbow / door / knuckle hardware + hoses ---
+[{a:armL,s:-1},{a:armR,s:1}].forEach(function(o){
+  var sh=o.a.sh, el=o.a.el, s=o.s;
+  boltRowY(sh,s*0.07-0.10,s*0.07+0.10,0.13,0.342,3,true);
+  boltRowY(sh,s*0.07-0.10,s*0.07+0.10,-0.13,0.342,3,true);
+  boltRectZ(sh,s*0.07,0.17,0.238,0.11,0.10,true);                 // pauldron front bolts
+  boltRectZ(sh,0,-0.24,0.132,0.085,0.13,true);                    // upper-arm shell bolts
+  boltRingX(el,s*0.128,0,0,0.066,6,true);                         // elbow disc bolts
+  boltRectZ(el,0,-0.27,0.172,0.095,0.185,true);                   // forearm door bolts
+  greeble(el,s*0.135,-0.27,0,7,0.01,0.3,0.16,'x');                // forearm outer machinery
+  plate(0.012,0.30,0.012,conduitMat,s*0.10,-0.27,0.166,el); detailCount++;
+  hose(sh,[[s*0.10,-0.04,-0.13],[s*0.17,-0.27,-0.17],[s*0.09,-0.47,-0.10]],0.014); // arm hose run
+  for(var fi2=0;fi2<4;fi2++) rivet(el,-0.072+fi2*0.048,-0.60,0.108); // knuckle rivets
+  plate(0.26,0.045,0.012,hazardMat,s*0.07,0.115,0.236,sh); detailCount++; // pauldron hazard strip
+});
+
+// --- LEGS: thigh / knee / shin / foot hardware, pipe clamps, hub bolts ---
+[{l:legL,s:-1},{l:legR,s:1}].forEach(function(o){
+  var hip=o.l.hip, knee=o.l.knee, foot=o.l.foot, s=o.s;
+  boltRectZ(hip,0,-0.24,0.172,0.115,0.155,true);                  // thigh armor bolts
+  boltRowZ(hip,-0.10,0.10,-0.055,0.165,3,true);                   // hip ring bolts
+  hose(hip,[[s*0.13,-0.05,-0.13],[s*0.18,-0.27,-0.17],[s*0.10,-0.47,-0.10]],0.014);
+  boltRingX(knee,s*0.158,0,0,0.07,6,true);                        // knee disc bolts
+  boltRectZ(knee,0,-0.01,0.19,0.075,0.05,true);                   // knee pad bolts
+  boltRectZ(knee,0,-0.33,0.198,0.10,0.15,true);                   // shin plate bolts
+  boltRowZ(knee,-0.10,0.10,-0.155,0.19,4,true);                   // shin top bolts
+  plate(0.012,0.30,0.012,conduitMat,0,-0.33,0.196,knee); detailCount++;
+  greeble(knee,0,-0.30,-0.185,8,0.2,0.34,0.01,'z');               // calf-back machinery
+  hose(knee,[[s*0.12,-0.08,-0.14],[s*0.16,-0.30,-0.18],[s*0.10,-0.50,-0.12]],0.013);
+  box(0.045,0.022,0.22,MAT.steelDark,s*0.155,-0.365,-0.05,knee); detailCount++; // pipe clamps
+  box(0.045,0.022,0.22,MAT.steelDark,s*0.155,-0.475,-0.05,knee); detailCount++;
+  boltRingX(knee,s*0.298,-0.31,-0.02,0.068,5,true);               // calf wheel hub bolts
+  boltRowZ(foot,-0.09,0.09,-0.045,0.318,3,true);                  // toe bolts
+  plate(0.27,0.045,0.012,hazardMat,0,-0.115,0.188,knee); detailCount++; // shin hazard strip
+});
+
+// ============================================================
+// SCULPT PASS 2 — silhouette + instanced micro-detail architecture.
+// Curved / tapered armor overlays fix the blocky read (domed
+// pauldrons, chest taper wedges, boot flares, sculpted face),
+// while InstancedMesh systems — perforation fields, rivet lines,
+// cooling fins, stage plating — push the true rendered part
+// count past ten thousand at ~15 extra draw calls.
+// ============================================================
+var instancedParts=0;
+var _im4=new THREE.Matrix4(),_iq=new THREE.Quaternion(),_ie=new THREE.Euler(),_iv=new THREE.Vector3(),_isv=new THREE.Vector3();
+function instanced(geo,mat,list,parent){
+  var im=new THREE.InstancedMesh(geo,mat,list.length);
+  for(var ii=0;ii<list.length;ii++){ var it=list[ii];
+    _ie.set(it.r?it.r[0]:0,it.r?it.r[1]:0,it.r?it.r[2]:0); _iq.setFromEuler(_ie);
+    _iv.set(it.p[0],it.p[1],it.p[2]); var sc=it.s||1; _isv.set(sc,sc,sc);
+    _im4.compose(_iv,_iq,_isv); im.setMatrixAt(ii,_im4);
+  }
+  im.instanceMatrix.needsUpdate=true; im.receiveShadow=true;
+  if(parent)parent.add(im); instancedParts+=list.length; return im;
+}
+var holeGeo=new THREE.CylinderGeometry(0.0062,0.0062,0.01,8);
+function perfZ(parent,cx,cy,z,nx,ny,dx,dy){ // perforation field on a Z-facing panel
+  var list=[];
+  for(var i=0;i<nx;i++)for(var j=0;j<ny;j++) list.push({p:[cx+(i-(nx-1)/2)*dx, cy+(j-(ny-1)/2)*dy, z], r:[Math.PI/2,0,0]});
+  return instanced(holeGeo,MAT.seam,list,parent);
+}
+function perfX(parent,x,cy,cz,ny,nz,dy,dz){ // perforation field on an X-facing panel
+  var list=[];
+  for(var j=0;j<ny;j++)for(var k=0;k<nz;k++) list.push({p:[x, cy+(j-(ny-1)/2)*dy, cz+(k-(nz-1)/2)*dz], r:[0,0,Math.PI/2]});
+  return instanced(holeGeo,MAT.seam,list,parent);
+}
+var rivetGeoI=new THREE.SphereGeometry(0.0078,6,5);
+function rivetRectZ(parent,cx,cy,z,hw,hh,step){ // rivet line around a Z-facing panel edge
+  var list=[],x,y;
+  for(x=-hw;x<=hw+0.001;x+=step){ list.push({p:[cx+x,cy-hh,z]}); list.push({p:[cx+x,cy+hh,z]}); }
+  for(y=-hh+step;y<=hh-step+0.001;y+=step){ list.push({p:[cx-hw,cy+y,z]}); list.push({p:[cx+hw,cy+y,z]}); }
+  return instanced(rivetGeoI,MAT.steelDark,list,parent);
+}
+var finGeo=new THREE.BoxGeometry(0.15,0.007,0.055);
+function finStackY(parent,cx,cy,cz,n,dy,w){ // vertical stack of horizontal cooling fins
+  var list=[];
+  for(var i=0;i<n;i++) list.push({p:[cx,cy+(i-(n-1)/2)*dy,cz]});
+  var im=instanced(finGeo,MAT.dark,list,parent); if(w) im.scale.x=w/0.15; return im;
+}
+
+// --- Silhouette: domed pauldrons, chest taper wedges, sculpted head, boot flares ---
+[{a:armL,s:-1},{a:armR,s:1}].forEach(function(o){
+  var dome=new THREE.Mesh(new THREE.SphereGeometry(0.20,24,14,0,Math.PI*2,0,Math.PI/2),MAT.redFlame);
+  dome.scale.set(1.02,0.62,1.30); dome.position.set(o.s*0.07,0.30,0); dome.castShadow=true; dome.receiveShadow=true; o.a.sh.add(dome); detailCount++;
+  var dome2=new THREE.Mesh(new THREE.SphereGeometry(0.155,20,12,0,Math.PI*2,0,Math.PI/2),MAT.red);
+  dome2.scale.set(1.0,0.6,1.25); dome2.position.set(o.s*0.07,0.345,0); dome2.castShadow=true; o.a.sh.add(dome2); detailCount++;
+});
+[-1,1].forEach(function(s){
+  var wedge=box(0.12,0.46,0.42,MAT.redDark,s*0.465,0.42,0,torso); wedge.rotation.y=-s*0.28; detailCount++;
+  var wedge2=box(0.10,0.30,0.36,MAT.red,s*0.45,0.70,-0.02,torso); wedge2.rotation.y=-s*0.20; detailCount++;
+  var cg=box(0.05,0.16,0.10,MAT.steel,s*0.145,0.06,0.13,head); cg.rotation.y=s*0.5; cg.rotation.z=-s*0.15; detailCount++;
+  var blade=box(0.02,0.13,0.09,MAT.blueDark,s*0.175,0.30,-0.03,head); blade.rotation.z=-s*0.35; detailCount++;
+  var blade2=box(0.02,0.10,0.07,MAT.blue,s*0.172,0.235,-0.03,head); blade2.rotation.z=-s*0.30; detailCount++;
+});
+box(0.16,0.07,0.04,MAT.steelDark,0,-0.045,0.15,head); detailCount++;            // chin guard
+var browExt=box(0.32,0.03,0.06,MAT.blue,0,0.30,0.16,head); browExt.rotation.x=-0.15; detailCount++;
+rivetRectZ(head,0,0.115,0.184,0.125,0.105,0.03);                                 // faceplate rivet line
+
+// --- Torso micro-detail: side perforation, backpack field, rivet frames, fins ---
+[-1,1].forEach(function(s){
+  perfX(torso,s*0.478,0.55,0,20,16,0.024,0.024);
+  finStackY(torso,s*0.50,0.45,-0.18,10,0.03,0.10);
+});
+perfZ(torso,0,0.56,-0.408,38,25,0.019,0.021);                                    // backpack perforation field
+perfZ(hips,0,0.02,-0.185,20,7,0.024,0.024);                                      // rear pelvis field
+rivetRectZ(torso,0,0.55,0.256,0.45,0.335,0.045);                                 // chest front rivet frame
+rivetRectZ(torso,0,0.56,-0.412,0.34,0.27,0.04);                                  // back panel rivet frame
+
+// --- Arms / legs micro-detail ---
+[{a:armL,s:-1},{a:armR,s:1}].forEach(function(o){
+  rivetRectZ(o.a.el,0,-0.27,0.166,0.10,0.20,0.04);
+  perfX(o.a.el,o.s*0.128,-0.27,0,17,11,0.024,0.024);
+  finStackY(o.a.el,0,-0.27,-0.165,9,0.032,0.20);
+});
+[{l:legL,s:-1},{l:legR,s:1}].forEach(function(o){
+  var knee=o.l.knee;
+  perfX(knee,o.s*0.158,-0.30,0,20,13,0.024,0.024);
+  rivetRectZ(knee,0,-0.33,0.198,0.105,0.155,0.04);
+  finStackY(knee,0,-0.30,-0.19,10,0.03,0.24);
+  box(0.345,0.15,0.385,MAT.blueDark,0,-0.485,0,knee); detailCount++;             // boot flare cuff
+  box(0.29,0.12,0.10,MAT.steelDark,0,-0.045,0.33,o.l.foot); detailCount++;       // toe cap
+});
+
+// --- Stage plating: perforated floor rings + instanced ring bolts ---
+(function(){
+  var list=[],ring,r,a,i,j;
+  var bands=[[1.25,2.0,8,100],[2.7,4.4,14,130]];
+  for(var b=0;b<bands.length;b++){
+    for(i=0;i<bands[b][3];i++){ a=i/bands[b][3]*Math.PI*2;
+      for(j=0;j<bands[b][2];j++){ r=bands[b][0]+(bands[b][1]-bands[b][0])*(bands[b][2]===1?0:j/(bands[b][2]-1));
+        list.push({p:[Math.cos(a)*r,0.007,Math.sin(a)*r]});
+      }
+    }
+  }
+  instanced(holeGeo,MAT.seam,list,scene);
+  var bolts=[];
+  [2.2,3.4,4.55].forEach(function(rr){ for(var k=0;k<72;k++){ var aa=k/72*Math.PI*2; bolts.push({p:[Math.cos(aa)*rr,0.012,Math.sin(aa)*rr]}); } });
+  instanced(boltGeoS,MAT.chrome,bolts,scene);
+})();
+
+// --- STAGE: floor ring fasteners (grounds the machine in the showroom) ---
+for(var fi3=0;fi3<28;fi3++){
+  var fa=fi3/28*Math.PI*2;
+  bolt(scene,Math.cos(fa)*4.55,0.012,Math.sin(fa)*4.55,0,0,0,true);
+}
+// Live part census → status badge (real rendered count: meshes + instances)
+var _db=document.getElementById('detailBadge');
+function updateCensus(){
+  var meshes=0, parts=0;
+  scene.traverse(function(m){ if(m.isMesh){ meshes++; parts+=(m.isInstancedMesh? m.count : 1); } });
+  if(_db) _db.textContent='零件 '+parts.toLocaleString('en-US')+' · 网格 '+meshes;
+}
+updateCensus();
+
+// ============================================================
+// SCULPT PASS 3 — FORM, not surface. Trapezoidal-section formed
+// armor replaces the box read: chest sides slope into a narrow
+// waist, thighs taper down, shins flare into boots, forearms
+// widen to the wrist, and an enlarged helmet shell (dome + side
+// guards + tall crest) fixes the pin-head proportion. Legs are
+// lengthened (hip groups scaled, hip height raised in the rig)
+// for a heroic long-leg / wide-shoulder silhouette.
+// ============================================================
+function trapGeo(wt,wb,h,dt,db){
+  var hwT=wt/2,hwB=wb/2,hdT=dt/2,hdB=db/2,hh=h/2;
+  var v=[-hwT,hh,-hdT, hwT,hh,-hdT, hwT,hh,hdT, -hwT,hh,hdT,
+         -hwB,-hh,-hdB, hwB,-hh,-hdB, hwB,-hh,hdB, -hwB,-hh,hdB];
+  var idx=[0,1,2,0,2,3, 4,6,5,4,7,6, 0,4,5,0,5,1, 1,5,6,1,6,2, 2,6,7,2,7,3, 3,7,4,3,4,0];
+  var g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
+  g.setIndex(idx); g=g.toNonIndexed(); g.computeVertexNormals(); return g;
+}
+function trap(wt,wb,h,dt,db,mat,x,y,z,parent,ry){
+  var m=new THREE.Mesh(trapGeo(wt,wb,h,dt,db),mat);
+  m.position.set(x,y,z); if(ry)m.rotation.y=ry;
+  m.castShadow=true; m.receiveShadow=true; if(parent)parent.add(m); detailCount++; return m;
+}
+function dome(parent,r,sx,sy,sz,mat,x,y,z){
+  var m=new THREE.Mesh(new THREE.SphereGeometry(r,26,16,0,Math.PI*2,0,Math.PI/2),mat);
+  m.scale.set(sx,sy,sz); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; parent.add(m); detailCount++; return m;
+}
+// --- proportion re-rank: shoulders out, stance wider, legs longer ---
+armL.sh.position.x=-0.66; armR.sh.position.x=0.66;
+legL.hip.position.x=-0.23; legR.hip.position.x=0.23;
+legL.knee.position.y=-0.60; legR.knee.position.y=-0.60;   // longer thighs (joint shift, no wheel distortion)
+legL.foot.position.y=-0.66; legR.foot.position.y=-0.66;   // longer shins; sole lands at hip-height 1.48
+torso.scale.set(0.97,1.0,0.96);
+// --- chest form: rounded yoke cap, sloping side shells, waist pinch ---
+dome(torso,0.50,1.02,0.34,0.55,MAT.redFlame,0,0.90,0);
+[-1,1].forEach(function(s){
+  trap(0.17,0.07,0.82,0.50,0.36,MAT.redDark,s*0.485,0.52,0,torso,-s*0.22);       // sloping chest sides
+  trap(0.13,0.06,0.52,0.40,0.30,MAT.red,s*0.47,0.68,-0.03,torso,-s*0.18);
+});
+trap(0.96,0.60,0.20,0.52,0.38,MAT.redDark,0,0.155,0,torso);                        // chest-to-waist taper skirt
+trap(0.56,0.42,0.30,0.36,0.30,MAT.steelDark,0,0.0,0,torso);                        // narrow formed waist
+trap(0.80,0.62,0.55,0.16,0.12,MAT.redDark,0,0.56,-0.36,torso);                     // tapered backpack shell
+// --- head form: enlarged helmet shell around the original head ---
+dome(head,0.205,1.06,0.82,1.12,MAT.blue,0,0.315,0);
+[-1,1].forEach(function(s){
+  trap(0.07,0.055,0.36,0.38,0.32,MAT.blue,s*0.19,0.15,0,head);                    // helmet side guards
+  trap(0.06,0.045,0.20,0.20,0.14,MAT.blueDark,s*0.185,0.02,0.10,head,-s*0.3);      // jaw guards tapering in
+});
+box(0.36,0.34,0.05,MAT.blue,0,0.16,-0.185,head); detailCount++;                    // helmet back panel
+var crestFin=box(0.045,0.10,0.13,MAT.blue,0,0.50,-0.03,head); crestFin.rotation.x=-0.06; detailCount++; // low crest spike, not a sail
+trap(0.26,0.15,0.20,0.05,0.04,MAT.chrome,0,0.045,0.165,head);                      // bright tapered jaw / face lower
+// --- arm form: tapered shells + wider, lower pauldron guards ---
+[{a:armL,s:-1},{a:armR,s:1}].forEach(function(o){
+  var sh=o.a.sh, el=o.a.el, s=o.s;
+  trap(0.36,0.28,0.16,0.50,0.44,MAT.red,s*0.07,0.06,0,sh);                        // pauldron lower guard (slab, not mushroom)
+  trap(0.27,0.20,0.46,0.26,0.22,MAT.steel,0,-0.26,0,sh);                          // tapered upper arm
+  trap(0.235,0.315,0.47,0.27,0.315,MAT.blue,0,-0.27,0,el);                        // forearm widening to wrist
+  trap(0.20,0.26,0.10,0.22,0.26,MAT.steelDark,0,-0.525,0,el);                     // wrist flare
+});
+// --- leg form: tapered thighs, domed knees, flared shin/boot shells ---
+[{l:legL,s:-1},{l:legR,s:1}].forEach(function(o){
+  var hip=o.l.hip, knee=o.l.knee, s=o.s;
+  trap(0.31,0.235,0.48,0.33,0.27,MAT.blue,0,-0.25,0,hip);                         // thigh tapering down
+  trap(0.26,0.20,0.40,0.06,0.05,MAT.blueDark,0,-0.25,0.155,hip);                  // thigh front plate taper
+  var kdome=dome(knee,0.115,1.05,0.9,0.6,MAT.red,0,0.0,0.10); kdome.rotation.x=Math.PI/2; // knee cap faces forward
+  trap(0.265,0.375,0.56,0.30,0.40,MAT.blue,0,-0.31,0,knee);                       // shin flaring into boot
+  trap(0.22,0.31,0.40,0.05,0.06,MAT.steel,0,-0.33,0.185,knee);                    // shin front plate flare
+  trap(0.30,0.36,0.14,0.36,0.42,MAT.steelDark,0,-0.56,0.02,knee);                 // boot cuff flare at the ankle
+});
+// --- density on the NEW formed shells (visible, on-body, instanced) ---
+[-1,1].forEach(function(s){
+  perfX(torso,s*0.56,0.52,0,22,14,0.026,0.028);                                  // chest side-shell perforation
+});
+[{l:legL,s:-1},{l:legR,s:1}].forEach(function(o){
+  perfZ(o.l.knee,0,-0.33,0.215,15,22,0.02,0.021);                                // shin plate micro-field
+  rivetRectZ(o.l.knee,0,-0.33,0.217,0.135,0.185,0.038);
+  perfZ(o.l.hip,0,-0.25,0.19,13,18,0.02,0.021);                                  // thigh plate micro-field
+});
+[{a:armL,s:-1},{a:armR,s:1}].forEach(function(o){
+  perfX(o.a.el,o.s*0.15,-0.27,0,18,12,0.025,0.026);                              // forearm shell perforation
+  rivetRectZ(o.a.sh,0,-0.26,0.145,0.115,0.20,0.04);                              // upper-arm rivet frame
+});
+perfZ(torso,0,0.56,-0.445,34,22,0.02,0.022);                                     // backpack shell field
+rivetRectZ(head,0,0.115,0.20,0.11,0.09,0.028);                                   // tapered-face rivet line
+// --- de-clutter: remove the dotted floor perforation carpet (kept the
+// polished showroom disc + ring bolts); census recounts honestly after ---
+(function(){
+  var kill=[];
+  scene.children.forEach(function(ch){ if(ch.isInstancedMesh && ch.count>1000) kill.push(ch); });
+  kill.forEach(function(ch){ scene.remove(ch); });
+})();
+updateCensus();
+
+// ----- Truck-only parts: ribbed trailer, tanks, mudflaps, light bar -----
 var truckParts=new THREE.Group(); root.add(truckParts); truckParts.visible=false;
-var cargo=box(1.05,0.95,1.55,MAT.silver,0,0.78,-1.55,truckParts);
-box(1.07,0.12,1.57,MAT.red,0,1.28,-1.55,truckParts);
-box(0.95,0.70,0.04,MAT.blueDark,0,0.78,-2.34,truckParts);
-var tw1=wheel(0.30,0.16,truckParts,-0.52,0.30,-1.15);
-var tw2=wheel(0.30,0.16,truckParts, 0.52,0.30,-1.15);
-var tw3=wheel(0.30,0.16,truckParts,-0.52,0.30,-1.95);
-var tw4=wheel(0.30,0.16,truckParts, 0.52,0.30,-1.95);
-var fw1=wheel(0.30,0.16,truckParts,-0.52,0.30,0.55);
-var fw2=wheel(0.30,0.16,truckParts, 0.52,0.30,0.55);
-box(1.02,0.18,0.30,MAT.chrome,0,0.32,0.78,truckParts); // bumper
-box(0.90,0.10,0.10,MAT.light,0,1.02,0.62,truckParts);
+var cargo=box(1.06,0.96,1.56,MAT.brushed,0,0.80,-1.55,truckParts);
+box(1.08,0.10,1.58,MAT.red,0,1.32,-1.55,truckParts);              // trailer roof band
+box(1.08,0.08,1.58,MAT.steelDark,0,0.30,-1.55,truckParts);       // trailer skirt
+for(var ri=0;ri<7;ri++){ var rz=-2.22+ri*0.225;                  // trailer ribs
+  plate(0.02,0.86,0.045,MAT.steelDark,-0.535,0.82,rz,truckParts);
+  plate(0.02,0.86,0.045,MAT.steelDark, 0.535,0.82,rz,truckParts);
+}
+box(0.96,0.72,0.04,MAT.blueDark,0,0.80,-2.345,truckParts);       // rear doors
+plate(0.02,0.72,0.02,MAT.seam,0,0.80,-2.37,truckParts);
+plate(0.96,0.02,0.02,MAT.seam,0,0.80,-2.37,truckParts);
+[-1,1].forEach(function(s){
+  box(0.07,0.06,0.03,MAT.redLight,s*0.40,0.42,-2.37,truckParts);
+  var tank=cyl(0.11,0.11,0.85,MAT.chrome,s*0.42,0.42,-0.55,truckParts); tank.rotation.x=Math.PI/2; // fuel tank
+  box(0.30,0.34,0.03,MAT.black,s*0.40,0.22,-2.28,truckParts);   // mudflap
+});
+var tw1=wheel(0.30,0.17,truckParts,-0.53,0.30,-1.15);
+var tw2=wheel(0.30,0.17,truckParts, 0.53,0.30,-1.15);
+var tw3=wheel(0.30,0.17,truckParts,-0.53,0.30,-1.95);
+var tw4=wheel(0.30,0.17,truckParts, 0.53,0.30,-1.95);
+var fw1=wheel(0.30,0.17,truckParts,-0.53,0.30,0.55);
+var fw2=wheel(0.30,0.17,truckParts, 0.53,0.30,0.55);
+box(1.04,0.20,0.10,MAT.chrome,0,0.34,0.86,truckParts);           // front bumper
+box(0.94,0.06,0.06,MAT.dark,0,0.52,0.84,truckParts);
+for(var li=0;li<5;li++) box(0.07,0.05,0.03,MAT.light,-0.24+li*0.12,1.06,0.66,truckParts); // roof light bar
+box(0.30,0.05,0.03,MAT.redLight,0,0.62,0.80,truckParts);
+// Trailer sculpt pass: perforated armored siding + door field + rivet frame (instanced)
+[-1,1].forEach(function(s){ perfX(truckParts,s*0.548,0.82,-1.55,30,70,0.029,0.0215); });
+perfZ(truckParts,0,0.80,-2.372,44,30,0.02,0.02);
+rivetRectZ(truckParts,0,0.80,-2.375,0.46,0.34,0.05);
+updateCensus();
 
 // ---------- Animation state ----------
 var action='idle', prevAction='idle';
@@ -321,7 +959,6 @@ var statusEl=document.getElementById('statusText'), badgeEl=document.getElementB
 var names={idle:'待机中 · Idle',walk:'行走中 · Walk',run:'奔跑中 · Run',wave:'挥手 · Wave',punch:'出拳 · Punch'};
 
 function setAction(a){
-  if(isTruck && a!=='idle'){ /* stay truck */ }
   prevAction=action; action=a;
   document.querySelectorAll('[data-action]').forEach(function(b){ b.classList.toggle('active', b.dataset.action===a); });
   statusEl.textContent=(isTruck?'卡车形态 · Truck':names[a]||a);
@@ -334,15 +971,15 @@ document.querySelectorAll('[data-action]').forEach(function(b){
 function toggleTransform(){
   isTruck=!isTruck; transformTarget=isTruck?1:0; servo(0.9);
   document.getElementById('transformBtn').classList.toggle('active',isTruck);
-  document.getElementById('transformBtn').textContent=isTruck?'🤖 变回机器人':'🚛 变形';
+  document.getElementById('transformBtn').textContent=isTruck?'变回机器人':'变形 · 卡车';
   badgeEl.textContent=isTruck?'卡车':'机器人';
   statusEl.textContent=isTruck?'变形中… → 卡车形态':'变形中… → 机器人形态';
   setTimeout(function(){ statusEl.textContent=isTruck?'卡车形态 · Truck（按 ▲ 前进）':names[action]; },1000);
 }
 document.getElementById('transformBtn').addEventListener('click',function(){ audio(); toggleTransform(); });
-document.getElementById('camBtn').addEventListener('click',function(){ camera.position.set(4.2,2.6,5.2); controls.target.set(pos.x,1.35,pos.z); });
+document.getElementById('camBtn').addEventListener('click',function(){ camera.position.set(4.4,2.4,5.6); controls.target.set(pos.x,1.35,pos.z); });
 var followBtn=document.getElementById('followBtn');
-followBtn.addEventListener('click',function(){ follow=!follow; followBtn.textContent=follow?'📷 跟随：开':'📷 跟随：关'; });
+followBtn.addEventListener('click',function(){ follow=!follow; followBtn.textContent=follow?'跟随：开':'跟随：关'; });
 var speedInput=document.getElementById('speed');
 speedInput.addEventListener('input',function(){ speedMul=parseFloat(speedInput.value); document.getElementById('speedVal').textContent=speedMul.toFixed(1)+'×'; });
 
@@ -376,6 +1013,8 @@ function animate(){
   var _now=performance.now(); var dt=Math.min((_now-_last)/1000,0.05); _last=_now; _elapsed+=dt;
   var t=_elapsed;
 
+  dust.rotation.y=t*0.008;
+
   // transform interpolation
   transformT=damp(transformT,transformTarget,3.2,dt);
   if(Math.abs(transformT-transformTarget)<0.002) transformT=transformTarget;
@@ -383,12 +1022,10 @@ function animate(){
   var tp=transformT;
   truckParts.scale.setScalar(Math.max(0.001,tp));
   truckParts.position.y=(1-tp)*0.2;
-  if(cargo) cargo.material.opacity=1;
 
   // input → movement
   var fwd=(keys.KeyW||pad.forward)?1:((keys.KeyS||pad.back)?-1:0);
   var turn=(keys.KeyA||pad.left)?1:((keys.KeyD||pad.right)?-1:0);
-  // In walk/run, holding forward moves; turning works anytime robot stands
   var moving=false, moveSpeed=0;
   if(tp<0.5){
     heading+=turn*1.9*dt*(fwd<0?-1:1);
@@ -403,7 +1040,6 @@ function animate(){
   }
   pos.x+=Math.sin(heading)*moveSpeed*dt;
   pos.z+=Math.cos(heading)*moveSpeed*dt;
-  // keep in arena
   var rr=Math.hypot(pos.x,pos.z); if(rr>7.2){ pos.x*=7.2/rr; pos.z*=7.2/rr; }
   root.position.set(pos.x,0,pos.z);
   root.rotation.y=heading;
@@ -414,11 +1050,10 @@ function animate(){
   else phase+=dt*1.2;
 
   var s=Math.sin(phase), c=Math.cos(phase);
-  // defaults (idle)
   var P={
     hipL:[0,0,0],kneeL:[0,0,0],hipR:[0,0,0],kneeR:[0,0,0],
     shL:[0,0,0.07],elL:[-0.12,0,0],shR:[0,0,-0.07],elR:[-0.12,0,0],
-    torso:[0,0,0],head:[0,Math.sin(t*0.4)*0.14,0],hipsY:1.24+Math.sin(t*1.6)*0.015,hipsR:[0,0,0]
+    torso:[0,0,0],head:[0,Math.sin(t*0.4)*0.14,0],hipsY:1.48+Math.sin(t*1.6)*0.015,hipsR:[0,0,0]
   };
   if(action==='idle'){
     P.shL[0]=Math.sin(t*1.6)*0.05; P.shR[0]=-Math.sin(t*1.6)*0.05;
@@ -432,7 +1067,7 @@ function animate(){
     P.elL[0]=action==='run'?-0.9-Math.max(0,-s)*0.3:-0.25;
     P.elR[0]=action==='run'?-0.9-Math.max(0,s)*0.3:-0.25;
     P.torso[0]=action==='run'?0.20:0.07; P.torso[1]=s*0.06;
-    P.hipsY=1.24+Math.abs(c)*(action==='run'?0.07:0.04)-(action==='run'?0.05:0);
+    P.hipsY=1.48+Math.abs(c)*(action==='run'?0.07:0.04)-(action==='run'?0.05:0);
     P.head[0]=action==='run'?0.12:0.02;
   }
   if(action==='wave'){
@@ -445,7 +1080,6 @@ function animate(){
     if(punchClock>=0) punchClock+=dt;
     var pc=punchClock%1.15, wind=0, thrust=0;
     if(pc<0.35){ wind=pc/0.35; } else if(pc<0.5){ thrust=1; wind=1-(pc-0.35)/0.15; } else { thrust=Math.max(0,1-(pc-0.5)/0.4); }
-    // right arm: wind back then punch forward (shoulder x -1.55 = arm forward horizontal)
     P.shR[0]= -wind*0.5 - thrust*1.55;
     P.elR[0]= -0.9*(wind) -0.08*thrust + -0.15*(1-wind-thrust>0?1:0);
     if(thrust<0.2 && wind<0.2) P.elR[0]=-0.15;
@@ -461,7 +1095,6 @@ function animate(){
   // Truck pose override (lerp by tp)
   if(tp>0.001){
     function mix(a,b){ return a+(b-a)*tp; }
-    // legs fold back horizontal, torso lowers & pitches, arms tuck, head retracts
     P.hipL[0]=mix(P.hipL[0],-1.45); P.hipR[0]=mix(P.hipR[0],-1.45);
     P.kneeL[0]=mix(P.kneeL[0],0.12); P.kneeR[0]=mix(P.kneeR[0],0.12);
     P.shL=[mix(P.shL[0],0.15),0,mix(P.shL[2],0.55)];
@@ -469,13 +1102,12 @@ function animate(){
     P.elL[0]=mix(P.elL[0],-0.15); P.elR[0]=mix(P.elR[0],-0.15);
     P.torso[0]=mix(P.torso[0],-0.18);
     P.hipsY=mix(P.hipsY,0.62);
-    head.scale.setScalar(Math.max(0.05,1-tp*1.05));
-    // wheels spin when driving in truck mode
+    head.scale.setScalar(1.30*Math.max(0.05,1-tp*1.05));
     var spin=moving?moveSpeed*dt*3.2:0;
     [tw1,tw2,tw3,tw4,fw1,fw2].forEach(function(w){ if(w) w.rotation.x+=spin; });
     legL.wheel.rotation.x+=spin; legR.wheel.rotation.x+=spin;
   } else {
-    head.scale.setScalar(1);
+    head.scale.setScalar(1.30);
     if(moving){ legL.wheel.rotation.x+=moveSpeed*dt*2.4; legR.wheel.rotation.x+=moveSpeed*dt*2.4; }
   }
 
@@ -500,7 +1132,13 @@ function animate(){
   controls.update();
   renderer.render(scene,camera);
 }
-animate();
+// Start after window load: the first frame compiles heavy PBR shaders, and
+// running it synchronously would block DOMContentLoaded on slow renderers.
+var _started=false;
+function _start(){ if(_started) return; _started=true; _last=performance.now(); requestAnimationFrame(animate); }
+if(document.readyState==='complete') _start();
+else addEventListener('load',_start);
+setTimeout(_start,1200); // fallback if load is delayed by a stalled resource
 
 addEventListener('resize',function(){
   camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
