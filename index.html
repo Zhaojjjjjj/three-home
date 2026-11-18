@@ -59,7 +59,7 @@
 <header class="top">
   <div class="title">
     <h1>擎天柱 <span>OPTIMUS PRIME</span></h1>
-    <p>分层胸甲 · 成型曲面装甲 / 重构卡车形态：卧铺驾驶室 + 驱动桥 + 全包围底盘裙板 · PBR 金属漆面</p>
+    <p>质感精修 · 深色金属漆 / 全装甲倒角 / 影棚三点光 · 分层胸甲 · 完整卡车形态</p>
   </div>
   <div class="status"><span class="dot"></span><span id="statusText">待机中 · Idle</span><span class="badge" id="detailBadge">高密细节层</span><span class="badge" id="modeBadge">机器人</span></div>
 </header>
@@ -125,16 +125,16 @@ var renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-perfo
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.18;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.12;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 container.appendChild(renderer.domElement);
 
 var scene=new THREE.Scene();
-scene.background=new THREE.Color(0x05070c);
-scene.fog=new THREE.Fog(0x05070c, 16, 34);
+scene.background=new THREE.Color(0x090b10);
+scene.fog=new THREE.Fog(0x090b10, 16, 34);
 
-var camera=new THREE.PerspectiveCamera(40, innerWidth/innerHeight, 0.1, 120);
-camera.position.set(4.4,2.4,5.6);
+var camera=new THREE.PerspectiveCamera(36, innerWidth/innerHeight, 0.1, 120);
+camera.position.set(3.15,1.6,4.4);
 
 // ---------- Procedural textures (paint wear / brushed metal / studio env) ----------
 function canvasTex(w,h,draw,srgb){
@@ -207,7 +207,7 @@ var _softGL=isSoftwareGL();
 if(_softGL){ renderer.setPixelRatio(0.65); renderer.shadowMap.enabled=false; } // software rasterizers: lower render resolution + skip the shadow pass so frames stay fast enough for capture and low-end devices
 if(!_softGL) setTimeout(function(){
 try{
-  var envTex=canvasTex(384,192,function(g,w,h){
+  var envTex=canvasTex(1024,512,function(g,w,h){
     var grad=g.createLinearGradient(0,0,0,h);
     grad.addColorStop(0,'#0a1224'); grad.addColorStop(0.42,'#26334d');
     grad.addColorStop(0.55,'#4a5a76'); grad.addColorStop(0.62,'#141a26'); grad.addColorStop(1,'#04060a');
@@ -218,22 +218,23 @@ try{
       g.globalAlpha=alpha; g.fillStyle=r; g.fillRect(x-bw*1.6,y-bh*1.6,bw*3.2,bh*3.2); g.globalAlpha=1;
       g.fillStyle='#ffffff'; g.fillRect(x-bw/2,y-bh/2,bw,bh);
     }
-    softbox(300,120,300,44,'rgba(255,255,255,.95)',0.95);   // key softbox
-    softbox(760,150,190,30,'rgba(160,195,255,.9)',0.8);     // cool strip
-    softbox(90,210,26,120,'rgba(255,120,80,.85)',0.7);      // warm kicker
-    softbox(950,230,20,100,'rgba(120,170,255,.8)',0.7);
-    g.fillStyle='rgba(255,255,255,.9)'; g.fillRect(0,268,w,5); // horizon strip
+    softbox(700,120,360,58,'rgba(255,255,255,.95)',0.95);   // key softbox, upper right
+    softbox(210,150,230,36,'rgba(165,200,255,.9)',0.85);    // cool strip, upper left
+    softbox(70,330,34,150,'rgba(255,130,80,.8)',0.7);       // warm kicker, low left
+    softbox(965,320,30,140,'rgba(130,175,255,.8)',0.7);     // cool kicker, low right
+    softbox(512,52,420,26,'rgba(255,255,255,.85)',0.8);     // overhead strip
+    g.fillStyle='rgba(255,255,255,.85)'; g.fillRect(0,302,w,5); // horizon strip
   },true);
   envTex.mapping=THREE.EquirectangularReflectionMapping;
   var pmrem=new THREE.PMREMGenerator(renderer);
   scene.environment=pmrem.fromEquirectangular(envTex).texture;
   pmrem.dispose();
 }catch(e){ /* lights alone still carry the scene */ }
-},2600);
+},1200);
 
 // Orbit controls — use bundled addon when present, otherwise built-in fallback so page never crashes
 function FallbackOrbit(cam, dom){
-  this.target=new THREE.Vector3(0,1.35,0); this.enableDamping=true; this.dampingFactor=0.06;
+  this.target=new THREE.Vector3(0,1.42,0); this.enableDamping=true; this.dampingFactor=0.06;
   this.maxPolarAngle=Math.PI*0.52; this.minDistance=2.2; this.maxDistance=14;
   var sph=new THREE.Spherical(), tgt=new THREE.Spherical();
   var off=cam.position.clone().sub(this.target); sph.setFromVector3(off); tgt.copy(sph);
@@ -250,18 +251,32 @@ function FallbackOrbit(cam, dom){
 var controls=null;
 try{ if(THREE.OrbitControls) controls=new THREE.OrbitControls(camera, renderer.domElement); }catch(e){ controls=null; }
 if(!controls) controls=new FallbackOrbit(camera, renderer.domElement);
-controls.target.set(0,1.35,0); if('enableDamping' in controls) controls.enableDamping=true; if('dampingFactor' in controls) controls.dampingFactor=0.06;
+controls.target.set(0,1.42,0); if('enableDamping' in controls) controls.enableDamping=true; if('dampingFactor' in controls) controls.dampingFactor=0.06;
 controls.maxPolarAngle=Math.PI*0.52; controls.minDistance=2.2; controls.maxDistance=14;
 
+// ---------- Optional bloom (guarded; skipped on software GL) ----------
+// Subtle, high-threshold bloom so only eyes / lamps / emissive strips glow —
+// the sheen that separates a product render from a flat viewport capture.
+var composer=null;
+if(!_softGL){ try{
+  if(THREE.EffectComposer&&THREE.RenderPass&&THREE.UnrealBloomPass&&THREE.OutputPass){
+    composer=new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene,camera));
+    composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.32,0.55,0.82));
+    composer.addPass(new THREE.OutputPass());
+  }
+}catch(e){ composer=null; } }
+
 // ---------- Cinematic lighting ----------
-scene.add(new THREE.HemisphereLight(0xbdd2f5,0x191009,0.62));
-var key=new THREE.DirectionalLight(0xfff2e0,2.6); key.position.set(5,8.5,4); key.castShadow=true;
-key.shadow.mapSize.set(1024,1024); key.shadow.camera.left=-6; key.shadow.camera.right=6; key.shadow.camera.top=7; key.shadow.camera.bottom=-4; key.shadow.bias=-0.0003; key.shadow.normalBias=0.02; key.shadow.radius=4;
+scene.add(new THREE.HemisphereLight(0xcdd8ea,0x1a140e,0.62));
+var key=new THREE.DirectionalLight(0xfff1dd,2.6); key.position.set(5,8.5,4); key.castShadow=true;
+key.shadow.mapSize.set(2048,2048); key.shadow.camera.left=-5.5; key.shadow.camera.right=5.5; key.shadow.camera.top=6.5; key.shadow.camera.bottom=-3; key.shadow.bias=-0.0002; key.shadow.normalBias=0.015; key.shadow.radius=6;
 scene.add(key);
-var rim=new THREE.DirectionalLight(0x5b9bff,2.0); rim.position.set(-6,4.5,-6); scene.add(rim);
-var fill=new THREE.DirectionalLight(0x93a7c9,0.55); fill.position.set(-4,2.5,5); scene.add(fill);
-var warm=new THREE.PointLight(0xff4a2e,14,11,1.6); warm.position.set(-3.2,0.9,3.2); scene.add(warm);
-var spot=new THREE.SpotLight(0xf4f7ff,90,22,Math.PI/5.2,0.5,1.3); spot.position.set(0,7.5,0.6); spot.target.position.set(0,0,0); scene.add(spot); scene.add(spot.target);
+var rim=new THREE.DirectionalLight(0x8fb4ff,1.7); rim.position.set(-6,5.5,-6.5); scene.add(rim);
+var fill=new THREE.DirectionalLight(0x93a7c9,0.5); fill.position.set(-4,2.5,5); scene.add(fill);
+var rim2=new THREE.DirectionalLight(0xffd9b0,0.55); rim2.position.set(6,3.5,-5.5); scene.add(rim2);
+var warm=new THREE.PointLight(0xff6a3d,7,11,1.6); warm.position.set(-3.2,0.9,3.2); scene.add(warm);
+var spot=new THREE.SpotLight(0xf4f7ff,70,22,Math.PI/5.2,0.5,1.3); spot.position.set(0,7.5,0.6); spot.target.position.set(0,0,0); scene.add(spot); scene.add(spot.target);
 
 // ---------- Showroom stage ----------
 var backdrop=new THREE.Mesh(
@@ -274,48 +289,61 @@ var backdrop=new THREE.Mesh(
 );
 backdrop.position.y=4.5; scene.add(backdrop);
 // polished dark floor — low roughness picks up the studio env like a showroom
-var ground=new THREE.Mesh(new THREE.CircleGeometry(10,72), new THREE.MeshStandardMaterial({color:0x11161f,roughness:0.32,metalness:0.72,envMapIntensity:0.85}));
+var ground=new THREE.Mesh(new THREE.CircleGeometry(10,72), new THREE.MeshStandardMaterial({color:0x17191d,roughness:0.36,metalness:0.4,envMapIntensity:0.75}));
 ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
-var stageDisc=new THREE.Mesh(new THREE.CircleGeometry(4.6,72), new THREE.MeshStandardMaterial({color:0x0c1220,roughness:0.16,metalness:0.85,envMapIntensity:1.1}));
+var stageDisc=new THREE.Mesh(new THREE.CircleGeometry(4.6,72), new THREE.MeshStandardMaterial({color:0x101216,roughness:0.27,metalness:0.55,envMapIntensity:0.85}));
 stageDisc.rotation.x=-Math.PI/2; stageDisc.position.y=0.004; stageDisc.receiveShadow=true; scene.add(stageDisc);
-var ringMat=new THREE.MeshBasicMaterial({color:0x3b82f6,transparent:true,opacity:0.5});
+var ringMat=new THREE.MeshBasicMaterial({color:0x6d87a5,transparent:true,opacity:0.2});
 [2.2,3.4,4.55].forEach(function(r){ var ring=new THREE.Mesh(new THREE.RingGeometry(r,r+0.03,90),ringMat); ring.rotation.x=-Math.PI/2; ring.position.y=0.008; scene.add(ring); });
-var grid=new THREE.PolarGridHelper(9.6,12,5,72,0x24466e,0x152540); grid.position.y=0.002; grid.material.transparent=true; grid.material.opacity=0.3; scene.add(grid);
+var grid=new THREE.PolarGridHelper(9.6,12,5,72,0x24466e,0x152540); grid.position.y=0.002; grid.material.transparent=true; grid.material.opacity=0.13; scene.add(grid);
+// soft contact shadow — grounds the machine where the shadow map softens;
+// follows the rig and stretches into the truck footprint when transformed
+var contactShadow=null;
+try{
+  var csTex=canvasTex(256,256,function(g,w,h){
+    var rg=g.createRadialGradient(w/2,h/2,10,w/2,h/2,w/2);
+    rg.addColorStop(0,'rgba(0,0,0,0.62)'); rg.addColorStop(0.55,'rgba(0,0,0,0.34)'); rg.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=rg; g.fillRect(0,0,w,h);
+  },true);
+  var csGeo=new THREE.CircleGeometry(1.3,40); csGeo.rotateX(-Math.PI/2);
+  contactShadow=new THREE.Mesh(csGeo,new THREE.MeshBasicMaterial({map:csTex,transparent:true,depthWrite:false}));
+  contactShadow.position.y=0.015; contactShadow.renderOrder=2; scene.add(contactShadow);
+}catch(e){ contactShadow=null; }
 // backdrop light towers
 for(var i=0;i<10;i++){ var a=i/10*Math.PI*2+0.31;
   var tower=new THREE.Mesh(new THREE.BoxGeometry(0.22,4.4,0.22), new THREE.MeshStandardMaterial({color:0x131a26,roughness:0.45,metalness:0.75}));
   tower.position.set(Math.cos(a)*8.6,2.2,Math.sin(a)*8.6); scene.add(tower);
-  var strip=new THREE.Mesh(new THREE.BoxGeometry(0.05,3.4,0.05), new THREE.MeshStandardMaterial({color:0x0b1e3a,emissive:0x2f6fd0,emissiveIntensity:1.5,roughness:0.4,metalness:0.2}));
+  var strip=new THREE.Mesh(new THREE.BoxGeometry(0.05,3.4,0.05), new THREE.MeshStandardMaterial({color:0x0b1e3a,emissive:0x2f6fd0,emissiveIntensity:0.65,roughness:0.4,metalness:0.2}));
   strip.position.set(Math.cos(a)*8.42,2.2,Math.sin(a)*8.42); scene.add(strip);
 }
 // drifting dust motes for depth
 var dustGeo=new THREE.BufferGeometry(); var dustPos=new Float32Array(240*3);
 for(var di=0;di<240;di++){ dustPos[di*3]=(Math.random()-0.5)*15; dustPos[di*3+1]=Math.random()*5.5+0.2; dustPos[di*3+2]=(Math.random()-0.5)*15; }
 dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPos,3));
-var dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:0x9db8dd,size:0.035,transparent:true,opacity:0.5,depthWrite:false}));
+var dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:0x9db8dd,size:0.035,transparent:true,opacity:0.28,depthWrite:false}));
 scene.add(dust);
 
 // ---------- PBR materials (car-paint clearcoat + real metals + wear maps) ----------
 function paint(c,extra){
-  var o={color:c,roughness:0.27,metalness:0.32,clearcoat:1.0,clearcoatRoughness:0.14,roughnessMap:wearTex,bumpMap:wearTex,bumpScale:0.9,envMapIntensity:1.3};
+  var o={color:c,roughness:0.30,metalness:0.55,clearcoat:1.0,clearcoatRoughness:0.15,roughnessMap:wearTex,bumpMap:wearTex,bumpScale:0.055,envMapIntensity:1.18};
   if(extra)for(var k in extra)o[k]=extra[k];
   return new THREE.MeshPhysicalMaterial(o);
 }
 function metal(c,r,extra){
-  var o={color:c,roughness:r,metalness:1.0,roughnessMap:brushTex,bumpMap:brushTex,bumpScale:0.25,envMapIntensity:1.25};
+  var o={color:c,roughness:r,metalness:1.0,roughnessMap:brushTex,bumpMap:brushTex,bumpScale:0.06,envMapIntensity:1.1};
   if(extra)for(var k in extra)o[k]=extra[k];
   return new THREE.MeshStandardMaterial(o);
 }
 function std(c,r,m,extra){ var o={color:c,roughness:r,metalness:m}; if(extra)for(var k in extra)o[k]=extra[k]; return new THREE.MeshStandardMaterial(o); }
 var MAT={
-  red: paint(0xb01218),
-  redDark: paint(0x7d0d13,{roughness:0.4}),
-  redFlame: paint(0xd21f26,{roughness:0.28}),
-  blue: paint(0x1447b8),
-  blueDark: paint(0x0f2f78,{roughness:0.4}),
-  steel: metal(0xb9c0cb,0.34),
+  red: paint(0x7d1013),
+  redDark: paint(0x570a0d,{roughness:0.4}),
+  redFlame: paint(0x8f151a,{roughness:0.29}),
+  blue: paint(0x173763),
+  blueDark: paint(0x10233f,{roughness:0.4}),
+  steel: metal(0xaab3c0,0.3),
   steelDark: metal(0x767e8a,0.46),
-  chrome: metal(0xf2f5f9,0.1),
+  chrome: metal(0xf2f5f9,0.07),
   brushed: metal(0x9aa3ae,0.5),
   dark: std(0x232a35,0.52,0.85,{roughnessMap:brushTex}),
   joint: std(0x141a22,0.42,0.9),
@@ -323,9 +351,9 @@ var MAT={
   tire: std(0x0e1013,0.94,0.04),
   gold: metal(0xd08a1d,0.3),
   copper: metal(0xb0662f,0.38),
-  glass: new THREE.MeshPhysicalMaterial({color:0x8fd8f2,roughness:0.05,metalness:0,transparent:true,opacity:0.88,envMapIntensity:2.2,emissive:0x0d3a52,emissiveIntensity:0.55,clearcoat:1,clearcoatRoughness:0.05}),
-  glassDark: new THREE.MeshPhysicalMaterial({color:0x2c5f7d,roughness:0.06,metalness:0.1,transparent:true,opacity:0.94,envMapIntensity:1.8,emissive:0x082a40,emissiveIntensity:0.5,clearcoat:1}),
-  eye: std(0x66f2ff,0.25,0.1,{emissive:0x18c8ff,emissiveIntensity:2.3}),
+  glass: new THREE.MeshPhysicalMaterial({color:0x39586c,roughness:0.06,metalness:0.1,transparent:true,opacity:0.94,envMapIntensity:1.9,emissive:0x0a2c40,emissiveIntensity:0.3,clearcoat:1,clearcoatRoughness:0.06}),
+  glassDark: new THREE.MeshPhysicalMaterial({color:0x1d4258,roughness:0.06,metalness:0.1,transparent:true,opacity:0.94,envMapIntensity:2.1,emissive:0x082a40,emissiveIntensity:0.5,clearcoat:1}),
+  eye: std(0x66f2ff,0.25,0.1,{emissive:0x18c8ff,emissiveIntensity:1.9}),
   light: std(0xfff3c4,0.3,0.15,{emissive:0xffc94d,emissiveIntensity:2.0}),
   amber: std(0xffb03a,0.3,0.15,{emissive:0xff8a00,emissiveIntensity:1.5}),
   redLight: std(0xff2a22,0.3,0.15,{emissive:0xff1206,emissiveIntensity:1.7}),
@@ -333,11 +361,13 @@ var MAT={
 };
 function box(w,h,d,mat,x,y,z,parent){
   var geo;
-  try{ geo=new THREE.RoundedBoxGeometry(w,h,d,2,Math.min(0.028,Math.min(w,h,d)*0.16)); }catch(e){ geo=new THREE.BoxGeometry(w,h,d); }
+  try{ geo=new THREE.RoundedBoxGeometry(w,h,d,3,Math.min(0.05,Math.min(w,h,d)*0.26)); }catch(e){ geo=new THREE.BoxGeometry(w,h,d); }
   var m=new THREE.Mesh(geo,mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; m.receiveShadow=true; if(parent)parent.add(m); return m;
 }
-function plate(w,h,d,mat,x,y,z,parent){ // plain sharp box for thin panels / seams / slats
-  var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; m.receiveShadow=true; if(parent)parent.add(m); return m;
+function plate(w,h,d,mat,x,y,z,parent){ // thin panels / seams / slats — micro-bevelled so edges still catch light
+  var geo;
+  try{ geo=new THREE.RoundedBoxGeometry(w,h,d,2,Math.min(0.008,Math.min(w,h,d)*0.22)); }catch(e){ geo=new THREE.BoxGeometry(w,h,d); }
+  var m=new THREE.Mesh(geo,mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; m.receiveShadow=true; if(parent)parent.add(m); return m;
 }
 function cyl(rt,rb,h,mat,x,y,z,parent,seg){
   var m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||24),mat); m.position.set(x||0,y||0,z||0); m.castShadow=true; m.receiveShadow=true; if(parent)parent.add(m); return m;
@@ -596,9 +626,9 @@ var hazardTex=canvasTex(128,128,function(g,w,h){
   for(var i=-5;i<6;i+=2) g.fillRect(i*16,-h,16,h*2);
   g.restore();
 },true);
-var hazardMat=std(0xffffff,0.55,0.4,{map:hazardTex});
+var hazardMat=std(0x232830,0.5,0.8); // refinement: cartoon hazard stripes replaced with a machined dark-steel strip
 var cableMat=std(0x11151c,0.62,0.55);
-var conduitMat=std(0x0b2b3a,0.35,0.2,{emissive:0x1899c2,emissiveIntensity:1.6});
+var conduitMat=std(0x0b2b3a,0.35,0.2,{emissive:0x1899c2,emissiveIntensity:0.65});
 function dMesh(geo,mat,x,y,z,parent,rx,ry,rz){
   var m=new THREE.Mesh(geo,mat); m.position.set(x,y,z);
   if(rx)m.rotation.x=rx; if(ry)m.rotation.y=ry; if(rz)m.rotation.z=rz;
@@ -625,6 +655,7 @@ function hose(parent,pts,r,mat){
 }
 var greebleMats=[MAT.dark,MAT.steelDark,MAT.joint,MAT.copper,MAT.brushed];
 function greeble(parent,cx,cy,cz,n,sx,sy,sz,thinAxis){
+  return; // refinement pass: random block clusters removed — they read as clutter, not machinery
   for(var i=0;i<n;i++){
     var w2=0.02+rnd()*0.05,h2=0.015+rnd()*0.045,d2=0.02+rnd()*0.05;
     if(thinAxis==='x') w2=0.022; if(thinAxis==='z') d2=0.022;
@@ -730,25 +761,29 @@ function instanced(geo,mat,list,parent){
   if(parent)parent.add(im); instancedParts+=list.length; return im;
 }
 var holeGeo=new THREE.CylinderGeometry(0.0062,0.0062,0.01,8);
-function perfZ(parent,cx,cy,z,nx,ny,dx,dy){ // perforation field on a Z-facing panel
+function perfZ(parent,cx,cy,z,nx,ny,dx,dy){ // perforation fields removed in the refinement pass — dotted panels read as toy plastic
+  return null;
   var list=[];
   for(var i=0;i<nx;i++)for(var j=0;j<ny;j++) list.push({p:[cx+(i-(nx-1)/2)*dx, cy+(j-(ny-1)/2)*dy, z], r:[Math.PI/2,0,0]});
   return instanced(holeGeo,MAT.seam,list,parent);
 }
-function perfX(parent,x,cy,cz,ny,nz,dy,dz){ // perforation field on an X-facing panel
+function perfX(parent,x,cy,cz,ny,nz,dy,dz){ // removed in the refinement pass (see perfZ)
+  return null;
   var list=[];
   for(var j=0;j<ny;j++)for(var k=0;k<nz;k++) list.push({p:[x, cy+(j-(ny-1)/2)*dy, cz+(k-(nz-1)/2)*dz], r:[0,0,Math.PI/2]});
   return instanced(holeGeo,MAT.seam,list,parent);
 }
 var rivetGeoI=new THREE.SphereGeometry(0.0078,6,5);
-function rivetRectZ(parent,cx,cy,z,hw,hh,step){ // rivet line around a Z-facing panel edge
+function rivetRectZ(parent,cx,cy,z,hw,hh,step){ // rivet outlines removed in the refinement pass — panel edges stay clean
+  return null;
   var list=[],x,y;
   for(x=-hw;x<=hw+0.001;x+=step){ list.push({p:[cx+x,cy-hh,z]}); list.push({p:[cx+x,cy+hh,z]}); }
   for(y=-hh+step;y<=hh-step+0.001;y+=step){ list.push({p:[cx-hw,cy+y,z]}); list.push({p:[cx+hw,cy+y,z]}); }
   return instanced(rivetGeoI,MAT.steelDark,list,parent);
 }
 var finGeo=new THREE.BoxGeometry(0.15,0.007,0.055);
-function finStackY(parent,cx,cy,cz,n,dy,w){ // vertical stack of horizontal cooling fins
+function finStackY(parent,cx,cy,cz,n,dy,w){ // fin arrays removed in the refinement pass
+  return null;
   var list=[];
   for(var i=0;i<n;i++) list.push({p:[cx,cy+(i-(n-1)/2)*dy,cz]});
   var im=instanced(finGeo,MAT.dark,list,parent); if(w) im.scale.x=w/0.15; return im;
@@ -758,11 +793,11 @@ function finStackY(parent,cx,cy,cz,n,dy,w){ // vertical stack of horizontal cool
 var pauldronDomes=[]; // base scales kept so truck mode can deflate the domes into the cab silhouette
 [{a:armL,s:-1},{a:armR,s:1}].forEach(function(o){
   var dome=new THREE.Mesh(new THREE.SphereGeometry(0.20,24,14,0,Math.PI*2,0,Math.PI/2),MAT.redFlame);
-  dome.scale.set(1.02,0.62,1.30); dome.position.set(o.s*0.07,0.30,0); dome.castShadow=true; dome.receiveShadow=true; o.a.sh.add(dome); detailCount++;
-  pauldronDomes.push({m:dome,sx:1.02,sy:0.62,sz:1.30});
+  dome.scale.set(0.96,0.40,1.16); dome.position.set(o.s*0.07,0.315,0); dome.castShadow=true; dome.receiveShadow=true; o.a.sh.add(dome); detailCount++;
+  pauldronDomes.push({m:dome,sx:0.96,sy:0.40,sz:1.16});
   var dome2=new THREE.Mesh(new THREE.SphereGeometry(0.155,20,12,0,Math.PI*2,0,Math.PI/2),MAT.red);
-  dome2.scale.set(1.0,0.6,1.25); dome2.position.set(o.s*0.07,0.345,0); dome2.castShadow=true; o.a.sh.add(dome2); detailCount++;
-  pauldronDomes.push({m:dome2,sx:1.0,sy:0.6,sz:1.25});
+  dome2.scale.set(0.94,0.36,1.08); dome2.position.set(o.s*0.07,0.35,0); dome2.castShadow=true; o.a.sh.add(dome2); detailCount++;
+  pauldronDomes.push({m:dome2,sx:0.94,sy:0.36,sz:1.08});
 });
 [-1,1].forEach(function(s){
   var wedge=box(0.12,0.46,0.42,MAT.redDark,s*0.465,0.42,0,torso); wedge.rotation.y=-s*0.28; detailCount++;
@@ -865,7 +900,7 @@ legL.knee.position.y=-0.60; legR.knee.position.y=-0.60;   // longer thighs (join
 legL.foot.position.y=-0.66; legR.foot.position.y=-0.66;   // longer shins; sole lands at hip-height 1.48
 torso.scale.set(0.97,1.0,0.96);
 // --- chest form: rounded yoke cap, sloping side shells, waist pinch ---
-dome(torso,0.50,1.02,0.34,0.55,MAT.redFlame,0,0.90,0);
+dome(torso,0.50,1.02,0.24,0.55,MAT.redFlame,0,0.90,0);
 var browVisor=box(0.94,0.045,0.22,MAT.redDark,0,0.865,0.275,torso); browVisor.rotation.x=0.30; detailCount++; // sloped brow over the windshield — sun visor in truck mode
 [-1,1].forEach(function(s){
   trap(0.17,0.07,0.82,0.50,0.36,MAT.redDark,s*0.485,0.52,0,torso,-s*0.22);       // sloping chest sides
@@ -875,7 +910,7 @@ trap(0.96,0.60,0.20,0.52,0.38,MAT.redDark,0,0.155,0,torso);                     
 trap(0.56,0.42,0.30,0.36,0.30,MAT.steelDark,0,0.0,0,torso);                        // narrow formed waist
 trap(0.80,0.62,0.55,0.16,0.12,MAT.redDark,0,0.56,-0.36,torso);                     // tapered backpack shell
 // --- head form: enlarged helmet shell around the original head ---
-dome(head,0.205,1.06,0.82,1.12,MAT.blue,0,0.315,0);
+dome(head,0.205,1.04,0.66,1.08,MAT.blue,0,0.315,0);
 [-1,1].forEach(function(s){
   trap(0.07,0.055,0.36,0.38,0.32,MAT.blue,s*0.19,0.15,0,head);                    // helmet side guards
   trap(0.06,0.045,0.20,0.20,0.14,MAT.blueDark,s*0.185,0.02,0.10,head,-s*0.3);      // jaw guards tapering in
@@ -1068,7 +1103,7 @@ function toggleTransform(){
   setTimeout(function(){ statusEl.textContent=isTruck?'卡车形态 · Truck（按 ▲ 前进）':names[action]; },1000);
 }
 document.getElementById('transformBtn').addEventListener('click',function(){ audio(); toggleTransform(); });
-document.getElementById('camBtn').addEventListener('click',function(){ camera.position.set(4.4,2.4,5.6); controls.target.set(pos.x,1.35,pos.z); });
+document.getElementById('camBtn').addEventListener('click',function(){ camera.position.set(3.15,1.6,4.4); controls.target.set(pos.x,1.42,pos.z); });
 var followBtn=document.getElementById('followBtn');
 followBtn.addEventListener('click',function(){ follow=!follow; followBtn.textContent=follow?'跟随：开':'跟随：关'; });
 var speedInput=document.getElementById('speed');
@@ -1139,6 +1174,7 @@ function animate(){
   var rr=Math.hypot(pos.x,pos.z); if(rr>7.2){ pos.x*=7.2/rr; pos.z*=7.2/rr; }
   root.position.set(pos.x,0,pos.z);
   root.rotation.y=heading;
+  if(contactShadow){ contactShadow.position.x=pos.x; contactShadow.position.z=pos.z; contactShadow.rotation.y=heading; var csK=1+0.25*tp; contactShadow.scale.set(csK,1,1+2.0*tp); }
 
   // gait phase
   var freq=(action==='run'?10.5:6.2)*speedMul;
@@ -1241,11 +1277,11 @@ function animate(){
 
   if(follow){
     var dx=pos.x-controls.target.x, dz=pos.z-controls.target.z;
-    controls.target.x+=dx*0.06; controls.target.z+=dz*0.06; controls.target.y=damp(controls.target.y, tp>0.5?0.6:1.35, 6, dt);
+    controls.target.x+=dx*0.06; controls.target.z+=dz*0.06; controls.target.y=damp(controls.target.y, tp>0.5?0.6:1.42, 6, dt);
     camera.position.x+=dx*0.06; camera.position.z+=dz*0.06;
   }
   controls.update();
-  renderer.render(scene,camera);
+  if(composer) composer.render(); else renderer.render(scene,camera);
 }
 // Start after window load: the first frame compiles heavy PBR shaders, and
 // running it synchronously would block DOMContentLoaded on slow renderers.
@@ -1258,6 +1294,7 @@ setTimeout(_start,1200); // fallback if load is delayed by a stalled resource
 addEventListener('resize',function(){
   camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth,innerHeight);
+  if(composer) composer.setSize(innerWidth,innerHeight);
 });
 })();
 </script>
